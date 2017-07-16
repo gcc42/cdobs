@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 
 #ifndef CONFIG_H
@@ -6,12 +7,14 @@
 #define SQLITE_DB "cdobs.db"
 #define DB_PATH "/home/Users/pranjala/"
 
+#define MAX_TIME_LENGTH 50
+
 #define MAX_QUERY_SIZE 1000
 
 const std::string sql_create = "CREATE TABLE %s;";
 
 const std::string bucket_schema = "Bucket (
-                                      BucketID: Integer PRIMARY KEY,
+                                      BucketID: INTEGER PRIMARY KEY,
                                       BucketName: VARCHAR UNIQUE,
                                       Created: DATE,
                                       ObjectCount: INTEGER

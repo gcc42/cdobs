@@ -3,7 +3,7 @@
   * sql database */ 
 class Cdobs {
 private:
-	sqlite_store *store;
+	DbStore *store;
 	int bucket_count;
 	int state;
 public:
@@ -26,4 +26,7 @@ struct Bucket {
 	string name;
 	struct tm *created;
 	int object_count;
+	Bucket(int p_id, char *p_name,  struct tm* time,
+		int count): id(p_id), name(p_name), created(time),
+		object_count(count) {}
 };

@@ -1,9 +1,9 @@
 #include <string>
-#include <init.h>
-#include <config.h>
-#include <error.h>
-#include <DbStore.h>
-#include <Cdobs.h>
+#include "init.h"
+#include "config.h"
+#include "error.h"
+#include "DbStore.h"
+#include "Cdobs.h"
 
 /* Inits DbStore object, passes it to cdobs,
  * and return the cdobs object */

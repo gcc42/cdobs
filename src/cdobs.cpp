@@ -1,6 +1,7 @@
 #include <iostream>
-#include <cdobs.h>
+#include "cdobs.h"
 #include <ctime>
+#include <vector>
 
 using namespace std;
 
@@ -46,7 +47,7 @@ int Cdobs::list_buckets (vector<Bucket> **buckets) {
 	return count;	
 }
 
-int Cdobs::put_object (istream src, string name, string bucket_name, ) {
+int Cdobs::put_object (istream src, string name, string bucket_name) {
 	char ctime[MAX_TIME_LENGTH];
 	// Get time as an "YYYY-MM-DD HH:MM:SS" format string
 	int writ = get_current_time(ctime, MAX_TIME_LENGTH);

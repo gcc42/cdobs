@@ -24,19 +24,19 @@ int Cdobs::create_bucket (string name) {
 
 	char *bname = name.c_str();
 	// Check if bucket name already exists
-	if (store->get_bucket_id_from_name(bname) != -1)
+	if (store->get_bucket_id(bname) != -1)
 		return 1;
-	int err = store->insert_into_bucket(bucket_id, bname, ctime, intial_obj_count);
+	int err = store->insert_bucket(bucket_id, bname, ctime, intial_obj_count);
 	return err;
 }
 
 // Also needs to delete all objects first.
 int Cdobs::delete_bucket (string name) {
-	int id = store->get_bucket_id_from_name(name.c_str());
+	int id = store->get_bucket_id(name.c_str());
 	if (id == -1) {
 		return 1;
 	}
-	store->delete_all_objects_from_bucket(id);
+	store->empty_bucket(id);
 	int err = store->delete_bucket(id);
 	return err;
 }
@@ -50,7 +50,7 @@ int Cdobs::put_object (istream src, string name, string bucket_name, ) {
 	char ctime[MAX_TIME_LENGTH];
 	// Get time as an "YYYY-MM-DD HH:MM:SS" format string
 	int writ = get_current_time(ctime, MAX_TIME_LENGTH);
-	int bucket_id = store->get_bucket_id_from_name(bucket_name.c_str());
+	int bucket_id = store->get_bucket_id(bucket_name.c_str());
 	if (bucket_id < 0) {
 		return -1; // Also set bucket not exists error code.
 	}

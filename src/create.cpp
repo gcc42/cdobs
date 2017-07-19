@@ -11,10 +11,10 @@ using namespace std;
 int setup_database () {
   int ret = 1;
   // Create databse file and setup tables
-  if (create_db(DB_PATH)) {
+  if (create_db(DB_PATH, SQLITE_DB_FILE)) {
       ret &= setup_tables();
   }
-  return ret;
+  return !ret;
 }
 
 // path must be a valid fully qualified path
@@ -27,7 +27,9 @@ int create_db (string path, string file_name) {
 
 bool file_exists (string file_name) {
   ifstream file(file_name);
-  return f.good();
+  int ret = f.good();
+  file.close();
+  return ret;
 }
 
 int setup_tables () {

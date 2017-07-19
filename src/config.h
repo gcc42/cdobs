@@ -4,8 +4,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define SQLITE_DB "cdobs.db"
-#define DB_PATH "/home/Users/pranjala/"
+#define SQLITE_DB_FILE "cdobs.sqlite"
+#define DB_PATH "./"  // Create database on the current path
 
 #define MAX_TIME_LENGTH 50
 

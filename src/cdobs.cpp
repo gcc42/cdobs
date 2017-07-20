@@ -10,7 +10,7 @@ using namespace std;
 
 Cdobs::Cdobs (DbStore *store) {
 	this->store = store;
-	status = store->good() ? S_GOOD : !S_GOOD;
+	int status = store->good() ? S_GOOD : !S_GOOD;
 	bucket_count = store->get_bucket_count();
 }
 
@@ -67,7 +67,7 @@ int Cdobs::put_object (istream src, string name,
 	if (size == -1) {
 		return -1; // Error status to object to large
 	}
-	store->update_obj_size(id, size);
+	store->update_object_size(id, size);
 	return size;
 }
 

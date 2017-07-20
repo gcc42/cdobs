@@ -9,7 +9,18 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "cdobs.h"
+
+struct Bucket {
+	int id;
+	std::string name;
+	struct tm *created;
+	int object_count;
+	Bucket(int p_id, char *p_name,  struct tm* time,
+		int count): id(p_id), name(p_name), created(time),
+		object_count(count) {}
+};
+
+
 
 /* DbSotre class, wrappers over direct
  * calls to the sqllite functions
@@ -38,6 +49,7 @@ public:
 	int insert_bucket(int bucket_id, char *name, char *time, 
 		int init_count);
 	int get_bucket_id(const char *name);
+	int get_bucket_count();
 	void empty_bucket(int bucket_id);
 	int delete_bucket(int bucket_id);
 	int select_all_buckets(Bucket **bucket);
@@ -45,7 +57,7 @@ public:
 	int create_object(const char *name, int bucket_id,
 		char *time, int size);
 	int update_object_size(int id, int size);
-	int put_object (istream src, int id);
+	int put_object(std::istream src, int id);
 };
 
 #endif

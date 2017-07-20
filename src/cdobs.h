@@ -6,17 +6,6 @@
 #include <iostream>
 #include "dbstore.h"
 
-struct Bucket {
-	int id;
-	std::string name;
-	struct tm *created;
-	int object_count;
-	Bucket(int p_id, char *p_name,  struct tm* time,
-		int count): id(p_id), name(p_name), created(time),
-		object_count(count) {}
-};
-
-
  /* The cdobs class : The Ceph Database object storage. 
   * Used in place of librados to store RGW(S3) objects in an 
   * sql database */ 
@@ -35,7 +24,7 @@ public:
 	int list_buckets(std::vector<Bucket> **buckets);
 
 	/* Object operations */
-	int put_object(istream src, std::string name,
+	int put_object(std::istream src, std::string name,
 		std::string bucket_name);
 	int delete_object();
 	int list_objects();

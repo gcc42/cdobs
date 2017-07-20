@@ -17,7 +17,7 @@ int get_current_time (char *buffer, int len) {
 	tm *current_time = gmtime(&rawtime);
 	// SQLite expected date string format is "YYYY-MM-DD HH:MM:SS" (there are others too)
 	int written = strftime(buffer, len, TIME_FORMAT, current_time);
-	free(current_time); // Need to do this?
+	// free(current_time); // Why is this segaulting?
 	return written;
 }
 

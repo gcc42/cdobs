@@ -32,6 +32,7 @@ int Cdobs::create_bucket (string name, string &err_msg) {
 		err_msg = ERR_BUCKET_ALREADY_EXIST;
 		return 1;
 	}
+
 	int err = store->insert_bucket(bucket_id, bname, ctime,
 		intial_obj_count);
 	return err;

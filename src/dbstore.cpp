@@ -52,11 +52,11 @@ int DbStore::init(char *db_name) {
 	int retValue = 0;
 	int ret = sqlite3_open(db_name, &sql_db);
 	if (ret != SQLITE_OK) {
-		cout << "DB file not accessible";
+		// cout << "DB file not accessible";
 		retValue = 1;
 	}
 	else if (!DbStore::check_db_init(sql_db)) {
-		cout << "Db not initialized for Cdobs";
+		// cout << "Db not initialized for Cdobs";
 		retValue = 1;
 	}
 	if (retValue == 1) {

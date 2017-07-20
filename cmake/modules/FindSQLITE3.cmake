@@ -19,12 +19,13 @@
 FIND_PATH(SQLITE3_INCLUDE_DIR NAMES sqlite3.h)
 
 # Look for the library.
-FIND_LIBRARY(SQLITE3_LIBRARY NAMES sqlite)
+FIND_LIBRARY(SQLITE3_LIBRARY NAMES sqlite sqlite3)
 
 # Handle the QUIETLY and REQUIRED arguments and set SQLITE3_FOUND to TRUE if all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SQLITE3 DEFAULT_MSG SQLITE3_LIBRARY SQLITE3_INCLUDE_DIR)
-
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SQLITE3
+                                  REQUIRED_VARS SQLITE3_LIBRARY SQLITE3_INCLUDE_DIR
+                                  FAIL_MESSAGE "Could not find sqlite3.h and/or libsqlite3.so")
 # Copy the results to the output variables.
 IF(SQLITE3_FOUND)
 	SET(SQLITE3_LIBRARIES ${SQLITE3_LIBRARY})

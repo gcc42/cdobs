@@ -11,8 +11,8 @@ const string ERR_CDOBS_NOINIT = "Couldn't initialize cdobs. \
 								The database may be in an inconsistent state.";
 
 // Command Error Messages
-const string ERR_INIT_FAILED = "Operation `init' failed";
-const string ERR_CB_FAILED = "Operation `create_bucket' failed";
+const string ERR_INIT_FAILED = "Operation `init' failed.";
+const string ERR_CB_FAILED = "Operation `create_bucket' failed.";
 
 // setup db errors
 const string ERR_CANT_CREATE_FILE = "Couldn't create the database file, please check if \
@@ -21,3 +21,7 @@ const string ERR_CANT_SETUP_TABLE = "Sorry, there was a problem creating the sql
 									Has the database already been initialized? Try deleting \
 									the database file and run the command again.";
 
+
+// Cdobs errors
+const string ERR_BUCKET_ALREADY_EXIST = "Bucket already exists. \
+										Please choose a different name.";

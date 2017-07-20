@@ -1,6 +1,6 @@
 set(cdobs_srcs
   cdobs.cpp
-  DbStore.cpp
+  dbstore.cpp
   create.cpp
   main.cpp
   dberror.cpp

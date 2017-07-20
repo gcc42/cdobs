@@ -5,6 +5,8 @@
 using namespace std;
 
 // To check if the table Bucket exist
+const string DbStore::COUNT_BUCKETS = "SELECT Count(BucketID) FROM Bucket";
+
 const string DbStore::EXIST_BUCKET = "SELECT 1 FROM Bucket LIMIT 1";
 
 const string DbStore::INSERT_BUCKET = "INSERT INTO Bucket \
@@ -83,7 +85,7 @@ void DbStore::prepare (char *stmt_str) {
 
 int DbStore::exec (char *query) {
 	char *err_msg = NULL;
-	int rc = sqlite3_exec(sql_db, query, NULL, NULL, &err_msgr);
+	int rc = sqlite3_exec(sql_db, query, NULL, NULL, &err_msg);
 	if (rc != SQLITE_OK) {
 		if (err_msg) {
 			cout << err_msg;
@@ -92,6 +94,19 @@ int DbStore::exec (char *query) {
 		return -1;
 	}
 	return 0;
+}
+
+int DbStore::get_bucket_count () {
+	sqlite3_stmt *stmt = prepare(DbStore::COUNT_BUCKETS);
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		char *count_str = (char *)sqlite3_column_text(stmt, 0);
+		int count = 0;
+		sscanf(count_str, "%d", &count);
+		return count;
+	}
+	else {
+		return -1;
+	}
 }
 
 int DbStore::insert_bucket (int bucket_id, char *name, char *time, 
@@ -134,7 +149,7 @@ int DbStore::cb_list_buckets (void *data,
 int DbStore::select_all_buckets (vector<Bucket> **buckets) {
 	*buckets = new vector<Bucket>();
 	char *err_msg;
-	int rc = sqlite3_exec(sql_db, SELECT_ALL_BUCKETS, list_bucket_callback,
+	int rc = sqlite3_exec(sql_db, SELECT_ALL_BUCKETS, cb_list_bucket,
 		(void *)*buckets, err_msg);
 	if (rc != SQLITE_OK) {
 		return -1;
@@ -187,4 +202,22 @@ int DbStore::delete_object (int id) {
 	writ = snprintf(query, SHORT_QUERY_SIZE,
 		DELETE_OBJECT, id);
 	return exec(query);
+}
+
+int DbStore::create_object (const char *name,
+	int bucket_id, char *time) {
+	// To be implemented
+}
+
+int DbStore::create_object (const char *name, int bucket_id,
+	char *time, int size) {
+	// To be implemented
+}
+
+int DbStore::put_object (istream src, int id) {
+	// To be implemented
+}
+
+int DbStore::update_object_size (int id, int size) {
+	// To be implemented
 }

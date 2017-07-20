@@ -3,7 +3,6 @@
 
 #include <string>
 
-#define MAX_TIME_LENGTH 100
 #define TIME_FORMAT "%Y-%m-%d %H:%M:%S"
 
 std::string create_query(std::string format, std::string schema);

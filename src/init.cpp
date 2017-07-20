@@ -1,10 +1,11 @@
 #include <string>
 #include "init.h"
 #include "config.h"
-#include "error.h"
+#include "dberror.h"
 #include "dbstore.h"
-#include "Cdobs.h"
+#include "cdobs.h"
 
+using namespace std;
 /* Inits DbStore object, passes it to cdobs,
  * and return the cdobs object */
 int init_cdobs (Cdobs **cdobs, string &err_msg) {

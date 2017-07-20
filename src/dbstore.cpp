@@ -1,6 +1,7 @@
 #include "dbstore.h"
 #include "cdobs.h"
 #include <sqlite3.h>
+#include "utils.h"
 
 using namespace std;
 
@@ -33,8 +34,8 @@ const string DbStore::DELETE_OBJECT = "DELETE FROM ObjectDirectory \
  * if the table Bucket exists */
 bool DbStore::check_db_init (sqlite3 *db) {
 	char *err_msg;
-	int rc = sqlite3_exec(sql_db, EXIST_BUCKET, NULL,
-		NULL, &err_msgr);
+	int rc = sqlite3_exec(db, EXIST_BUCKET.c_str(), NULL,
+		NULL, &err_msg);
 	if (rc != SQLITE_OK) {
 		// Error Status: Table does not exist
 		if (err_msg) {
@@ -71,7 +72,7 @@ int DbStore::good () {
 }
 
 // Requires a UTF-8 stmt string 
-void DbStore::prepare (char *stmt_str) {
+sqlite3_stmt *DbStore::prepare (const char *stmt_str) {
 	sqlite3_stmt *stmt;
 	int rc = sqlite3_prepare(sql_db, stmt_str,
 		-1, &stmt, NULL);
@@ -97,7 +98,7 @@ int DbStore::exec (char *query) {
 }
 
 int DbStore::get_bucket_count () {
-	sqlite3_stmt *stmt = prepare(DbStore::COUNT_BUCKETS);
+	sqlite3_stmt *stmt = prepare(DbStore::COUNT_BUCKETS.c_str());
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
 		char *count_str = (char *)sqlite3_column_text(stmt, 0);
 		int count = 0;
@@ -109,11 +110,11 @@ int DbStore::get_bucket_count () {
 	}
 }
 
-int DbStore::insert_bucket (int bucket_id, char *name, char *time, 
-	int init_count) {
+int DbStore::insert_bucket (int bucket_id, const char *name,
+	char *time, int init_count) {
 	char query[MAX_QUERY_SIZE];
 	int writ = snprintf(query, MAX_QUERY_SIZE,
-		INSERT_BUCKET, bucket_id, name, time, init_count);
+		INSERT_BUCKET.c_str(), bucket_id, name, time, init_count);
 	if (writ < 0 || writ > MAX_QUERY_SIZE) {
 		return -1;
 	}
@@ -123,7 +124,7 @@ int DbStore::insert_bucket (int bucket_id, char *name, char *time,
 int DbStore::delete_bucket (int bucket_id) {
 	char query[SHORT_QUERY_SIZE];
 	int writ = snprintf(query, SHORT_QUERY_SIZE,
-		DELETE_BUCKET, id);
+		DELETE_BUCKET.c_str(), bucket_id);
 	if (writ < 0 || writ > SHORT_QUERY_SIZE) {
 		return -1;
 	}
@@ -137,7 +138,7 @@ int DbStore::cb_list_buckets (void *data,
 	int id, object_count;
 	sscanf(argv[0], "%d", &id);
 	sscanf(argv[3], "%d", &object_count);
-	char *bucket_name = argc[1];
+	char *bucket_name = argv[1];
 	struct tm* time = parse_time_string(argv[2]);
 
 	Bucket *bucket = new Bucket(id, bucket_name,
@@ -149,18 +150,19 @@ int DbStore::cb_list_buckets (void *data,
 int DbStore::select_all_buckets (vector<Bucket> **buckets) {
 	*buckets = new vector<Bucket>();
 	char *err_msg;
-	int rc = sqlite3_exec(sql_db, SELECT_ALL_BUCKETS, cb_list_bucket,
-		(void *)*buckets, err_msg);
+	int rc = sqlite3_exec(sql_db, SELECT_ALL_BUCKETS.c_str(),
+		&DbStore::cb_list_buckets, (void *)*buckets, &err_msg);
 	if (rc != SQLITE_OK) {
+		sqlite3_free(err_msg);
 		return -1;
 	}
 	return 0;
 }
 
-int DbStore::get_bucket_id (char *name) {
+int DbStore::get_bucket_id (const char *name) {
 	char query[MAX_QUERY_SIZE];
 	int writ = snprintf(query, MAX_QUERY_SIZE,
-		SELECT_BUCKET_ID, name);
+		SELECT_BUCKET_ID.c_str(), name);
 	if (writ < 0 || writ > MAX_QUERY_SIZE) {
 		return -1;
 	}
@@ -192,7 +194,7 @@ int DbStore::empty_bucket (int id) {
 int DbStore::delete_object (int id) {
 	char query[SHORT_QUERY_SIZE];
 	int writ = snprintf(query, SHORT_QUERY_SIZE,
-		DELETE_DATA, id);
+		DELETE_DATA.c_str(), id);
 	// first, delete object data
 	int rc = exec(query);
 	if (rc != SQLITE_OK) {
@@ -200,7 +202,7 @@ int DbStore::delete_object (int id) {
 	}
 	// Then delete the object entry
 	writ = snprintf(query, SHORT_QUERY_SIZE,
-		DELETE_OBJECT, id);
+		DELETE_OBJECT.c_str(), id);
 	return exec(query);
 }
 
@@ -214,7 +216,7 @@ int DbStore::create_object (const char *name, int bucket_id,
 	// To be implemented
 }
 
-int DbStore::put_object (istream src, int id) {
+int DbStore::put_object (istream &src, int id) {
 	// To be implemented
 }
 

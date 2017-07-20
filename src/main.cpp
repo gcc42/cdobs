@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 	int rc, exit_code = 0;
 	string arg1(argv[1]);
 	if (arg1 == "init") {
-		rc = command_init(err_msg);
+		rc = command_init();
 		exit_code = rc;
 	}
 	else if (arg1 == "create_bucket") {

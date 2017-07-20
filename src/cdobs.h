@@ -24,7 +24,7 @@ public:
 	int list_buckets(std::vector<Bucket> **buckets);
 
 	/* Object operations */
-	int put_object(std::istream src, std::string name,
+	int put_object(std::istream &src, std::string name,
 		std::string bucket_name);
 	int delete_object();
 	int list_objects();

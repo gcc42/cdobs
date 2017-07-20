@@ -2,15 +2,16 @@
 #include <iostream>
 #include <ctime>
 #include <vector>
+#include "config.h"
 #include "utils.h"
 #include "dbstore.h"
 #include "dberror.h"
 
 using namespace std;
 
-Cdobs::Cdobs (DbStore *store) {
+Cdobs::Cdobs (DbStore *store): state(S_NOINIT) {
 	this->store = store;
-	int status = store->good() ? S_GOOD : !S_GOOD;
+	state = store->good() ? S_GOOD : !S_GOOD;
 	bucket_count = store->get_bucket_count();
 }
 
@@ -52,7 +53,7 @@ int Cdobs::list_buckets (vector<Bucket> **buckets) {
 	return count;	
 }
 
-int Cdobs::put_object (istream src, string name,
+int Cdobs::put_object (istream &src, string name,
 	string bucket_name) {
 	
 	char ctime[MAX_TIME_LENGTH];

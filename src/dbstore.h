@@ -7,6 +7,7 @@
 #define S_NOINIT -1
 #define S_GOOD 1
 
+#include <vector>
 #include <string>
 #include <sqlite3.h>
 
@@ -29,6 +30,7 @@ struct Bucket {
 class DbStore {
 private:
 	static const std::string COUNT_BUCKETS;
+	static const std::string EXIST_BUCKET;
 	static const std::string INSERT_BUCKET;
 	static const std::string SELECT_ALL_BUCKETS;
 	static const std::string SELECT_BUCKET_ID;
@@ -39,25 +41,28 @@ private:
 	sqlite3 *sql_db;
 	int status;
 
-	int prepare(char *stmt_str);
+	sqlite3_stmt *prepare(const char *stmt_str);
 	int exec(char *stmt_str);
 public:
 	static bool check_db_init(sqlite3 *db);
 	DbStore ();
 	int init (char *db_name);
 	int good ();
-	int insert_bucket(int bucket_id, char *name, char *time, 
+	int insert_bucket(int bucket_id, const char *name, char *time, 
 		int init_count);
 	int get_bucket_id(const char *name);
 	int get_bucket_count();
-	void empty_bucket(int bucket_id);
+	int empty_bucket(int bucket_id);
 	int delete_bucket(int bucket_id);
-	int select_all_buckets(Bucket **bucket);
+	static int cb_list_buckets (void *data, int argc,
+		char **argv, char **azColName);
+	int select_all_buckets(std::vector<Bucket> **buckets);
+	int delete_object (int id);
 	int create_object(const char *name, int bucket_id, char *time);
 	int create_object(const char *name, int bucket_id,
 		char *time, int size);
 	int update_object_size(int id, int size);
-	int put_object(std::istream src, int id);
+	int put_object(std::istream &src, int id);
 };
 
 #endif

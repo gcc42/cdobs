@@ -11,9 +11,9 @@
 
 #define MAX_QUERY_SIZE 1000
 
-const std::string sql_create = "CREATE TABLE %s;";
+const std::string SQL_CREATE = "CREATE TABLE %s;";
 
-const std::string bucket_schema = "Bucket (
+const std::string BUCKET_SCHEMA = "Bucket (
                                       BucketID: INTEGER PRIMARY KEY,
                                       BucketName: VARCHAR UNIQUE,
                                       Created: DATE,
@@ -23,7 +23,7 @@ const std::string bucket_schema = "Bucket (
                                         // BuckerOwner: Interger REFERENCES User.Uid,
                                         // Location: VARCHAR,
 
-const std::string object_directory_schema = "ObjectDirectory (
+const std::string OBJECT_DIR_SCHEMA = "ObjectDirectory (
                                               ObjectID: VARCHAR PRIMARY KEY,
                                               ObjectName: TEXT,
                                               BucketId: INTEGER REFERENCES Bucket,
@@ -31,7 +31,7 @@ const std::string object_directory_schema = "ObjectDirectory (
                                               Size: INTEGER
                                             )";
 
-const std::string object_store_schema = "ObjectStore (
+const std::string OBJECT_STORE_SCHEMA = "ObjectStore (
                                           ObjectID: VARCHAR REFERENCES ObjectDirectory, 
                                           Data: BLOB,
                                           PRIMARY KEY(ObjectID)

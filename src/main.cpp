@@ -33,11 +33,13 @@ int command_create_bucket (int argc, char **argv) {
 	string bucket_name(argv[2]), err_msg;
 	int rc_init = init_cdobs(&cdobs, err_msg);
 	if (rc_init) {
+		cout << "Init failed";
 		retValue = 1;
 	}
 	else {
 		int rc_cb = cdobs->create_bucket(bucket_name, err_msg);
 		if (rc_cb) {
+			cout << "Op failed";
 			retValue = 1;		
 		}		
 	}

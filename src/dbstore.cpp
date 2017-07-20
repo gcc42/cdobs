@@ -39,7 +39,6 @@ bool DbStore::check_db_init (sqlite3 *db) {
 	if (rc != SQLITE_OK) {
 		// Error Status: Table does not exist
 		if (err_msg) {
-			cout << err_msg;
 			sqlite3_free(err_msg);
 		}
 		return false;
@@ -52,17 +51,20 @@ DbStore::DbStore() : sql_db(NULL), status(S_NOINIT) {}
 int DbStore::init(char *db_name) {
 	int retValue = 0;
 	int ret = sqlite3_open(db_name, &sql_db);
-	if (ret) {
-		// Error Code: DB file not accessible
+	if (ret != SQLITE_OK) {
+		cout << "DB file not accessible";
 		retValue = 1;
 	}
 	else if (!DbStore::check_db_init(sql_db)) {
-		// Error: Db not initialized for Cdobs
+		cout << "Db not initialized for Cdobs";
 		retValue = 1;
 	}
 	if (retValue == 1) {
 		sqlite3_close(sql_db);
 		status = !S_GOOD;
+	}
+	else {
+		status = S_GOOD;
 	}
 	return retValue;
 }

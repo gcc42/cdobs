@@ -14,6 +14,7 @@ int init_cdobs (Cdobs **cdobs, string &err_msg) {
 	// Init the DbStore object
 	int rc = store->init(SQLITE_DB_FILE);
 	if (rc) {
+		cout << "DbStore init failed";
 		err_msg = ERR_DB_NOINIT;
 		retValue = 1;
 	}
@@ -21,6 +22,7 @@ int init_cdobs (Cdobs **cdobs, string &err_msg) {
 		// Init Cdobs
 		*cdobs = new Cdobs(store);
 		if (!(*cdobs)->good()) {
+			cout << "DbStore init failed";
 			err_msg = ERR_CDOBS_NOINIT;
 			retValue = 1;
 		}		

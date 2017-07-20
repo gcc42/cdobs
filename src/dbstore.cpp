@@ -1,4 +1,4 @@
-#include "DbStore.h"
+#include "dbstore.h"
 #include "cdobs.h"
 #include <sqlite3.h>
 

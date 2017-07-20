@@ -2,7 +2,7 @@
 #include "init.h"
 #include "config.h"
 #include "error.h"
-#include "DbStore.h"
+#include "dbstore.h"
 #include "Cdobs.h"
 
 /* Inits DbStore object, passes it to cdobs,

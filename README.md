@@ -37,5 +37,9 @@ Any output written to stream `dout` will output to console in this mode.
 # initialize the db file
 ./cdobs init
 # Create a bucket named b1
-./cdobs create_bucket b1
+./cdobs bucket create b1
+# List all buckets
+./cdobs bucket
+# Put object named makefile, with contents on Makefile in b1
+./cdobs object put -b b1 -f Makefile makefile
 ```

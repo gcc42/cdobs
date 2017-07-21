@@ -15,28 +15,28 @@ static const string HELP_BUCKET =
 "Usage: cdobs bucket \
 [help | create name | \
 list name | delete name]\n\
-where name is the bucket_name\n";
+where name is the bucket_name";
 
 static const string HELP_CDOBS = 
 "Usage: cdobs \
 [help | bucket | object]\n\
 Hit one of the commands to know more \
-about them \n";
+about them";
 
 static const string HELP_OBJECT = 
 "Usage: cdobs object \
-[put -b bucket_name -f file_name object_name]\n";
+[put -b bucket_name -f file_name object_name]";
 
 void com_help () {
-	cout << HELP_CDOBS;
+	cout << HELP_CDOBS << endl;
 }
 
 void com_bucket_help () {
-	cout << HELP_BUCKET;
+	cout << HELP_BUCKET << endl;
 }
 
 void com_object_help () {
-	cout << HELP_OBJECT;
+	cout << HELP_OBJECT << endl;
 }
 
 int com_init () {
@@ -44,7 +44,7 @@ int com_init () {
 	int rc = setup_database(err_msg);
 	if (rc) {
 		cerr << "ERROR: " << ERR_INIT_FAILED
-		<< err_msg;
+		<< " " << err_msg << endl;
 		return 1;
 	}
 	return 0;
@@ -59,7 +59,7 @@ int com_create_bucket (Cdobs *const cdobs, int argc,
 	if (rc_cb) {
 		retValue = 1;		
 		cerr << "ERROR: " << ERR_CB_FAILED
-		<< err_msg;
+		<< err_msg << endl;
 	}		
 
 	return retValue;
@@ -70,11 +70,16 @@ int com_list_buckets (Cdobs *const cdobs) {
 	string err_msg;
 	int rc = cdobs->list_buckets(buckets, err_msg);
 	if (rc) {
-		cout << "ERROR: " << err_msg;
+		cout << "ERROR: " << err_msg << endl;
 		return 1;
 	}
-	for (auto b = buckets.begin(); b != buckets.end(); ++b) {
-		cout  << b->id << "   " << b->name << endl;
+	if (buckets.size() == 0) {
+		cout << "No buckets in storage" << endl;
+	}
+	else {
+		for (auto b = buckets.begin(); b != buckets.end(); ++b) {
+			cout  << b->id << "   " << b->name << endl;
+		}		
 	}
 	return 0;
 }
@@ -113,10 +118,13 @@ int com_put_object (Cdobs *const cdobs, int argc,
 
 	if (bucket_name == "" || object_name == ""
 		|| file_name == "") {
-		cout << ERR_INVALID_SYNTAX;
+		cout << ERR_INVALID_SYNTAX << endl;
 		com_object_help();
 		return 1;
 	}
+
+	dout << bucket_name << " " << object_name << "  "
+	<< file_name << endl;
 
 	ifstream src(file_name.c_str(), ios::binary);
 	if (!src.good()) {
@@ -129,7 +137,7 @@ int com_put_object (Cdobs *const cdobs, int argc,
 	int rc = cdobs->put_object(src, object_name,
 		bucket_name, err_msg);
 	if (rc) {
-		cout << "ERROR: " << err_msg;
+		cout << "ERROR: " << err_msg << endl;
 		return 1;
 	}
 	return 0;
@@ -173,7 +181,7 @@ int main(int argc, char **argv) {
 		string err_msg;
 		int rc_init = init_cdobs(&cdobs, err_msg);
 		if (rc_init) {
-			cout << "ERROR: " << err_msg;
+			cout << "ERROR: " << err_msg << endl;
 			exit_code = 1;
 		}
 		else {

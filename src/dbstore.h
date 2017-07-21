@@ -53,6 +53,7 @@ private:
 public:
 	static bool check_db_init(sqlite3 *db);
 	DbStore ();
+	~DbStore ();
 	int init (char *db_name);
 	int good ();
 	int insert_bucket(int bucket_id, const char *name, char *time, 

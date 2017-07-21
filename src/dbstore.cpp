@@ -273,7 +273,8 @@ int DbStore::create_object (const char *name, int bucket_id,
 		err_msg = "Query INSERT_OBJECT_ENTRY failed";
 		return -1;
 	}
-	return 0;
+	dout << "Create object succedded" << endl;
+	return obj_id;
 }
 
 /* Insert object data into the ObjectStore table */
@@ -295,9 +296,11 @@ int DbStore::put_object (istream &src, int id, string &err_msg) {
     char* buffer = new char[size];
     src.read(buffer, size);
 
+    // dout << buffer << endl;
     char query[SHORT_QUERY_SIZE];
     int writ = snprintf(query, SHORT_QUERY_SIZE,
     	INSERT_OBJECT_DATA.c_str(), id);
+    dout << "Put object query: " << query << endl;
     sqlite3_stmt *stmt = prepare(query);
     if (!stmt) {
        err_msg = "Prepare failed: " + string(sqlite3_errmsg(sql_db));
@@ -307,7 +310,7 @@ int DbStore::put_object (istream &src, int id, string &err_msg) {
         // SQLITE_STATIC because the statement is finalized
         // before the buffer is freed:
         // Column 2 for the data column
-        rc = sqlite3_bind_blob(stmt, 2, buffer,
+        rc = sqlite3_bind_blob(stmt, 1, buffer,
         	size, SQLITE_STATIC);
         if (rc != SQLITE_OK) {
             err_msg = "Bind failed: " + string(sqlite3_errmsg(sql_db));
@@ -323,8 +326,13 @@ int DbStore::put_object (istream &src, int id, string &err_msg) {
     }
     sqlite3_finalize(stmt);
     delete[] buffer;
+    return 0;
 }
 
 int DbStore::update_object_size (int id, int size) {
 	return 0;
+}
+
+DbStore::~DbStore () {
+	sqlite3_close(sql_db);
 }

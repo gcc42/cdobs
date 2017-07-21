@@ -21,7 +21,8 @@ public:
 	/* Bucket operations */
 	int create_bucket(std::string name, std::string &err_msg);
 	int delete_bucket(std::string name);
-	int list_buckets(std::vector<Bucket> **buckets);
+	int list_buckets(std::vector<Bucket> &buckets,
+		std::string &err_msg);
 
 	/* Object operations */
 	int put_object(std::istream &src, std::string name,

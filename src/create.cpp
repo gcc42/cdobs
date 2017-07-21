@@ -37,7 +37,7 @@ static int setup_tables (string path, string file_name) {
 	// Create Bucket table
 	snprintf(buf, MAX_QUERY_SIZE,
 		SQL_CREATE.c_str(), BUCKET_SCHEMA.c_str());
-	cout << buf;
+	dout << buf;
 	if (sqlite3_exec(db, buf, NULL, NULL, NULL) != SQLITE_OK) {
 		return FAILURE;  	
 	}

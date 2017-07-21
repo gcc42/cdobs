@@ -57,8 +57,9 @@ int Cdobs::delete_bucket (string name) {
 	return err;
 }
 
-int Cdobs::list_buckets (vector<Bucket> **buckets) {
-	int count = store->select_all_buckets(buckets);
+int Cdobs::list_buckets (vector<Bucket> &buckets,
+	string &err_msg) {
+	int count = store->select_all_buckets(buckets, err_msg);
 	return count;	
 }
 

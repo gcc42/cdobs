@@ -56,20 +56,25 @@ int com_create_bucket (Cdobs *const cdobs, int argc,
 	return retValue;
 }
 
-int com_bucket (int argc, char **argv) {
-	if (argc < 2) {
-		com_bucket_help();
-		return 0;
-	}
-
-	Cdobs *cdobs;
-	int retValue = 0;
+int com_list_buckets (Cdobs *const cdobs) {
+	vector<Bucket> buckets;
 	string err_msg;
-	int rc_init = init_cdobs(&cdobs, err_msg);
-	if (rc_init) {
+	int rc = cdobs->list_buckets(buckets, err_msg);
+	if (rc) {
 		cout << "ERROR: " << err_msg;
 		return 1;
 	}
+	for (auto b = buckets.begin(); b != buckets.end(); ++b) {
+		cout  << b->id << "   " << b->name << endl;
+	}
+	return 0;
+}
+
+int com_bucket (Cdobs *const cdobs, int argc, char **argv) {
+	if (argc < 2) {
+		return com_list_buckets(cdobs);
+	}
+
 	string arg1(argv[1]); int rc_op;
 	if (arg1 == "create") {
 		rc_op = com_create_bucket(cdobs, argc, argv);
@@ -80,10 +85,9 @@ int com_bucket (int argc, char **argv) {
 	}
 }
 
-int com_object (int argc, char **argv) {
+int com_object (Cdobs *const cdobs, int argc, char **argv) {
 	// TBI
 }
-
 
 // TODO: 
 // 1. Add a help message.
@@ -96,24 +100,35 @@ int main(int argc, char **argv) {
 		com_help();
 		exit(0);
 	}
-	int rc, exit_code = 0;
+
+	int exit_code = 0;	
 	string arg1(argv[1]);
 	if (arg1 == "init") {
-		rc = com_init();
-		exit_code = rc;
+		exit_code = com_init();
 	}
-	else if (arg1 == "bucket") {
-		// Send the rest of commands
-		rc = com_bucket(argc - 1, argv + 1);
-		exit_code = rc;
+	else  {
+		Cdobs *cdobs;
+		int retValue = 0;
+		string err_msg;
+		int rc_init = init_cdobs(&cdobs, err_msg);
+		if (rc_init) {
+			cout << "ERROR: " << err_msg;
+			exit_code = 1;
+		}
+		else {
+			if (arg1 == "bucket") {
+				// send the rest of commands
+				exit_code = com_bucket(cdobs, argc - 1, argv + 1);
+			}
+			else if (arg1 == "object") {
+				exit_code = com_object(cdobs, argc - 1, argv + 1);
+			}
+			else {
+				com_help();
+				exit_code = 1;
+			} 			
+		}
 	}
-	else if (arg1 == "object") {
-		rc = com_object(argc, argv);
-		exit_code = rc;
-	}
-	else {
-		com_help();
-		exit_code = 1;
-	}
+
 	exit(exit_code);
 }

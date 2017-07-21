@@ -16,9 +16,12 @@ struct Bucket {
 	std::string name;
 	struct tm *created;
 	int object_count;
+	
 	Bucket(int p_id, char *p_name,  struct tm* time,
 		int count): id(p_id), name(p_name), created(time),
 		object_count(count) {}
+
+	Bucket () {}
 };
 
 
@@ -56,7 +59,8 @@ public:
 	int delete_bucket(int bucket_id);
 	static int cb_list_buckets (void *data, int argc,
 		char **argv, char **azColName);
-	int select_all_buckets(std::vector<Bucket> **buckets);
+	int select_all_buckets(std::vector<Bucket> &buckets,
+		std::string &err_msg);
 	int delete_object (int id);
 	int create_object(const char *name, int bucket_id, char *time);
 	int create_object(const char *name, int bucket_id,

@@ -1,27 +1,34 @@
-#include <error.h>
+#include "dberror.h"
 #include <string>
 
 using namespace std;
 
 // init_cdobs errors
-const string ERR_DB_NOINIT = "Couldn't initialize database. \
-							Either the file doesn't exist or it has not \
-							been initialized. Run `cdobs init' to initialize database";
-const string ERR_CDOBS_NOINIT = "Couldn't initialize cdobs. \
-								The database may be in an inconsistent state.";
+const string ERR_DB_NOINIT = 
+"Couldn't initialize database. \
+Either the file doesn't exist or it has not \
+been initialized. Run `cdobs init' to initialize database\n";
+
+const string ERR_CDOBS_NOINIT = 
+"Couldn't initialize cdobs. \
+The database may be in an inconsistent state.\n";
 
 // Command Error Messages
 const string ERR_INIT_FAILED = "Operation `init' failed.";
 const string ERR_CB_FAILED = "Operation `create_bucket' failed.";
 
 // setup db errors
-const string ERR_CANT_CREATE_FILE = "Couldn't create the database file, please check if \
-							 		the program has sufficient permissions";
-const string ERR_CANT_SETUP_TABLE = "Sorry, there was a problem creating the sql tables. \
-									Has the database already been initialized? Try deleting \
-									the database file and run the command again.";
+const string ERR_CANT_CREATE_FILE = 
+"Couldn't create the database file, please check if \
+the program has sufficient permissions\n";
+
+const string ERR_CANT_SETUP_TABLE = 
+"Sorry, there was a problem creating the sql tables. \
+Has the database already been initialized? Try deleting \
+the database file and run the command again.\n";
 
 
 // Cdobs errors
-const string ERR_BUCKET_ALREADY_EXIST = "Bucket already exists. \
-										Please choose a different name.";
+const string ERR_BUCKET_ALREADY_EXIST = 
+"Bucket already exists. \
+Please choose a different name.\n";

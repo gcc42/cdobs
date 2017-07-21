@@ -149,13 +149,14 @@ int DbStore::cb_list_buckets (void *data,
 	return 0;
 }
 
-int DbStore::select_all_buckets (vector<Bucket> **buckets) {
-	*buckets = new vector<Bucket>();
-	char *err_msg;
+int DbStore::select_all_buckets (vector<Bucket> &buckets,
+	string &err_msg) {
+	char *err_str;
 	int rc = sqlite3_exec(sql_db, SELECT_ALL_BUCKETS.c_str(),
-		&DbStore::cb_list_buckets, (void *)*buckets, &err_msg);
+		&DbStore::cb_list_buckets, (void *)&buckets, &err_str);
 	if (rc != SQLITE_OK) {
-		sqlite3_free(err_msg);
+		err_msg = string(err_str);
+		sqlite3_free(err_str);
 		return -1;
 	}
 	return 0;

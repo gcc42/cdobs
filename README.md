@@ -19,6 +19,15 @@ make
 ```
 This will create the executable `cdobs/build/src/cdobs`
 
+### Debugging
+Debug mode build
+```bash
+cd cdobs/build/
+cmake ..
+make debug
+```
+Any output written to stream `dout` will output to console in this mode. 
+
 ### Currently supported operations
 1. Init
 2. Create Bucket

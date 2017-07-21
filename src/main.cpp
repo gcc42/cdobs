@@ -1,5 +1,7 @@
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <cstring>
 #include "config.h"
 #include "init.h"
 #include "create.h"
@@ -21,6 +23,9 @@ static const string HELP_CDOBS =
 Hit one of the commands to know more \
 about them \n";
 
+static const string HELP_OBJECT = 
+"Usage: cdobs object \
+[put -b bucket_name -f file_name object_name]\n";
 
 void com_help () {
 	cout << HELP_CDOBS;
@@ -28,6 +33,10 @@ void com_help () {
 
 void com_bucket_help () {
 	cout << HELP_BUCKET;
+}
+
+void com_object_help () {
+	cout << HELP_OBJECT;
 }
 
 int com_init () {
@@ -85,8 +94,60 @@ int com_bucket (Cdobs *const cdobs, int argc, char **argv) {
 	}
 }
 
+int com_put_object (Cdobs *const cdobs, int argc,
+	char **argv) {
+	string bucket_name, file_name, object_name;
+	for (int i = 2; i < argc; ++i) {
+		if (!std::strcmp(argv[i], "-b")) {
+			bucket_name = argv[i + 1];
+			i++;
+		}
+		else if (!std::strcmp(argv[i], "-f")) {
+			file_name = argv[i + 1];
+			i++;
+		}
+		else if (i == argc - 1) {
+			object_name = argv[i];
+		}
+	}
+
+	if (bucket_name == "" || object_name == ""
+		|| file_name == "") {
+		cout << ERR_INVALID_SYNTAX;
+		com_object_help();
+		return 1;
+	}
+
+	ifstream src(file_name.c_str(), ios::binary);
+	if (!src.good()) {
+		cout << "ERROR: " << ERR_INVALID_FILE
+		<< file_name << endl;
+		return 1;
+	}
+
+	string err_msg;
+	int rc = cdobs->put_object(src, object_name,
+		bucket_name, err_msg);
+	if (rc) {
+		cout << "ERROR: " << err_msg;
+		return 1;
+	}
+	return 0;
+}
+
 int com_object (Cdobs *const cdobs, int argc, char **argv) {
-	// TBI
+	if (argc < 2) {
+		com_object_help();
+		return 0;
+	}
+	string err_msg, arg1(argv[1]);
+	if (arg1 == "put") {
+		return com_put_object(cdobs, argc, argv);
+	}
+	else {
+		com_object_help();
+		return 1;
+	}
 }
 
 // TODO: 

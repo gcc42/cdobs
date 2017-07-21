@@ -26,7 +26,7 @@ public:
 
 	/* Object operations */
 	int put_object(std::istream &src, std::string name,
-		std::string bucket_name);
+		std::string bucket_name, std::string &err_msg);
 	int delete_object();
 	int list_objects();
 };

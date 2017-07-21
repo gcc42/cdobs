@@ -1,33 +1,58 @@
 #include "dbstore.h"
+#include "config.h"
+#include "dberror.h"
 #include "cdobs.h"
 #include <sqlite3.h>
 #include "utils.h"
 
 using namespace std;
 
+const string DbStore::COUNT_OBJECTS =
+"SELECT Count(ObjectID) FROM ObjectDirectory";
+
+const string DbStore::COUNT_BUCKETS =
+"SELECT Count(BucketID) FROM Bucket";
+
 // To check if the table Bucket exist
-const string DbStore::COUNT_BUCKETS = "SELECT Count(BucketID) FROM Bucket";
+const string DbStore::EXIST_BUCKET = 
+"SELECT 1 FROM Bucket LIMIT 1";
 
-const string DbStore::EXIST_BUCKET = "SELECT 1 FROM Bucket LIMIT 1";
+const string DbStore::INSERT_BUCKET = 
+"INSERT INTO Bucket \
+ (BucketID, BucketName, Created, ObjectCount) \
+ VALUES \
+ (%d, '%s', '%s', %d)";
 
-const string DbStore::INSERT_BUCKET = "INSERT INTO Bucket \
-										 (BucketID, BucketName, Created, ObjectCount) \
-										 VALUES \
-										 (%d, '%s', '%s', %d)";
+const string DbStore::INSERT_OBJECT_ENTRY = 
+"INSERT INTO ObjectDirectory \
+ (ObjectID, ObjectName, BucketID, Created, Size) \
+ VALUES \
+ (%d, '%s', %d, '%s', %d)";
 
-const string DbStore::DELETE_BUCKET = "DELETE FROM Bucket \
-							 			WHERE BucketID=%d";
+const string DbStore::INSERT_OBJECT_DATA =
+"INSERT INTO ObjectStore \
+(ObjectID, Data) \
+VALUES \
+(%d, ?)";
 
-const string DbStore::SELECT_ALL_BUCKETS = "SELECT * FROM Bucket";
+const string DbStore::DELETE_BUCKET = 
+"DELETE FROM Bucket \
+WHERE BucketID=%d";
 
-const string DbStore::SELECT_BUCKET_ID = "SELECT BucketID FROM Bucket \
-											WHERE BucketName = '%s'";
+const string DbStore::SELECT_ALL_BUCKETS = 
+"SELECT * FROM Bucket";
 
-const string DbStore::DELETE_DATA = "DELETE FROM ObjectStore \
-									WHERE ObjectID = %d";
+const string DbStore::SELECT_BUCKET_ID = 
+"SELECT BucketID FROM Bucket \
+WHERE BucketName = '%s'";
 
-const string DbStore::DELETE_OBJECT = "DELETE FROM ObjectDirectory \
-									WHERE ObjectID = %d";
+const string DbStore::DELETE_DATA =
+"DELETE FROM ObjectStore \
+WHERE ObjectID = %d";
+
+const string DbStore::DELETE_OBJECT =
+"DELETE FROM ObjectDirectory \
+WHERE ObjectID = %d";
 
 /* Checks if the given db is initialized
  * for cdobs. Currently does this by checking 
@@ -48,15 +73,32 @@ bool DbStore::check_db_init (sqlite3 *db) {
 
 DbStore::DbStore() : sql_db(NULL), status(S_NOINIT) {}
 
+int DbStore::get_object_count () {
+	char query[SHORT_QUERY_SIZE];
+	int writ = snprintf(query, SHORT_QUERY_SIZE,
+		COUNT_OBJECTS.c_str());
+	sqlite3_stmt *stmt = prepare(query);
+	if (sqlite3_step(stmt) == SQLITE_ROW) {
+		int count = 0;
+		char *count_str = (char *)sqlite3_column_text(stmt, 0);
+		sscanf(count_str, "%d", &count);
+		return count;
+	}
+	else {
+		sqlite3_finalize(stmt);
+		return -1;
+	}
+}
+
 int DbStore::init(char *db_name) {
 	int retValue = 0;
 	int ret = sqlite3_open(db_name, &sql_db);
 	if (ret != SQLITE_OK) {
-		// cout << "DB file not accessible";
+		dout << "DB file not accessible";
 		retValue = 1;
 	}
 	else if (!DbStore::check_db_init(sql_db)) {
-		// cout << "Db not initialized for Cdobs";
+		dout << "Db not initialized for Cdobs";
 		retValue = 1;
 	}
 	if (retValue == 1) {
@@ -65,6 +107,11 @@ int DbStore::init(char *db_name) {
 	}
 	else {
 		status = S_GOOD;
+		object_count = get_object_count();
+		if (object_count == -1) {
+			dout << "negative object count, unexpected\n";
+			retValue = 1;
+		}
 	}
 	return retValue;
 }
@@ -209,20 +256,75 @@ int DbStore::delete_object (int id) {
 	return exec(query);
 }
 
-int DbStore::create_object (const char *name,
-	int bucket_id, char *time) {
-	// To be implemented
+int DbStore::create_object (const char *name, int bucket_id,
+	char *time, string &err_msg) {
+	// Default size, unknown before putting in the object
+	return create_object(name, bucket_id, time, 0, err_msg);	
 }
 
 int DbStore::create_object (const char *name, int bucket_id,
-	char *time, int size) {
-	// To be implemented
+	char *time, int size, string &err_msg) {
+	char query[MAX_QUERY_SIZE];
+	int obj_id = ++object_count;
+	int writ = snprintf(query, MAX_QUERY_SIZE,
+		INSERT_OBJECT_ENTRY.c_str(), obj_id, name, 
+		bucket_id, time, size);
+	if (exec(query)) {
+		err_msg = "Query INSERT_OBJECT_ENTRY failed";
+		return -1;
+	}
+	return 0;
 }
 
-int DbStore::put_object (istream &src, int id) {
-	// To be implemented
+/* Insert object data into the ObjectStore table */
+int DbStore::put_object (istream &src, int id, string &err_msg) {
+	if (!src.good()) {
+		err_msg = "Invalid file";
+		return -1;
+	}
+    // Get Size
+    src.seekg(0, ios::end);
+    streampos size = src.tellg();
+    src.seekg(0);
+
+    if (size > MAX_OBJECT_SIZE) {
+    	err_msg = ERR_OBJECT_TOO_LARGE;
+    	return -1;
+    }
+
+    char* buffer = new char[size];
+    src.read(buffer, size);
+
+    char query[SHORT_QUERY_SIZE];
+    int writ = snprintf(query, SHORT_QUERY_SIZE,
+    	INSERT_OBJECT_DATA.c_str(), id);
+    sqlite3_stmt *stmt = prepare(query);
+    if (!stmt) {
+       err_msg = "Prepare failed: " + string(sqlite3_errmsg(sql_db));
+       return -1;
+    } else {
+    	int rc;
+        // SQLITE_STATIC because the statement is finalized
+        // before the buffer is freed:
+        // Column 2 for the data column
+        rc = sqlite3_bind_blob(stmt, 2, buffer,
+        	size, SQLITE_STATIC);
+        if (rc != SQLITE_OK) {
+            err_msg = "Bind failed: " + string(sqlite3_errmsg(sql_db));
+            return -1;
+        } else {
+            rc = sqlite3_step(stmt);
+            if (rc != SQLITE_DONE) {
+            	err_msg = "Execution failed: "
+            		+ string(sqlite3_errmsg(sql_db));
+            	return -1;
+            }
+        }
+    }
+    sqlite3_finalize(stmt);
+    delete[] buffer;
 }
 
 int DbStore::update_object_size (int id, int size) {
-	// To be implemented
+	return 0;
 }

@@ -11,29 +11,32 @@
 
 const std::string SQL_CREATE = "CREATE TABLE %s;";
 
-const std::string BUCKET_SCHEMA = "Bucket ( \
-                                      BucketID INTEGER PRIMARY KEY, \
-                                      BucketName VARCHAR UNIQUE, \
-                                      Created DATE, \
-                                      ObjectCount INTEGER \
-                                    )";
-                                        // Bucket ACL: ??,
-                                        // BuckerOwner: Interger REFERENCES User.Uid,
-                                        // Location: VARCHAR,
+const std::string BUCKET_SCHEMA = 
+"Bucket ( \
+	BucketID INTEGER PRIMARY KEY, \
+	BucketName VARCHAR UNIQUE, \
+	Created DATE, \
+	ObjectCount INTEGER \
+)";
+// Bucket ACL: ??,
+// BuckerOwner: Interger REFERENCES User.Uid,
+// Location: VARCHAR,
 
-const std::string OBJECT_DIR_SCHEMA = "ObjectDirectory ( \
-                                              ObjectID VARCHAR PRIMARY KEY, \
-                                              ObjectName TEXT, \
-                                              BucketId INTEGER REFERENCES Bucket, \
-                                              Created DATE, \
-                                              Size INTEGER \
-                                            )";
+const std::string OBJECT_DIR_SCHEMA =
+"ObjectDirectory ( \
+	ObjectID INTEGER PRIMARY KEY, \
+	ObjectName TEXT, \
+	BucketId INTEGER REFERENCES Bucket, \
+	Created DATE, \
+	Size INTEGER \
+)";
 
-const std::string OBJECT_STORE_SCHEMA = "ObjectStore ( \
-                                          ObjectID VARCHAR REFERENCES ObjectDirectory, \
-                                          Data BLOB, \
-                                          PRIMARY KEY(ObjectID) \
-                                        )";
+const std::string OBJECT_STORE_SCHEMA = 
+"ObjectStore ( \
+	ObjectID INTEGER REFERENCES ObjectDirectory, \
+	Data BLOB, \
+	PRIMARY KEY(ObjectID) \
+)";
 
 // Debug output 
 #define DEV_NULL "/dev/null"

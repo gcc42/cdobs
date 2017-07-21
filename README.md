@@ -1,6 +1,12 @@
 # cdobs
 Database object storage backend for Ceph
 
+### Dependencies
+Install the following packages on Fedora for SQLite3:
+```bash
+sudo dnf install sqlite-devel sqlite-tcl sqlite-jdbc
+```
+
 ### Build
 ```bash
 # clone the repo

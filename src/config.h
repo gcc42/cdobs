@@ -33,5 +33,10 @@ const std::string OBJECT_STORE_SCHEMA = "ObjectStore ( \
                                           ObjectID VARCHAR REFERENCES ObjectDirectory, \
                                           Data BLOB, \
                                           PRIMARY KEY(ObjectID) \
-                                        )";                                      
+                                        )";
+
+// Debug output 
+#define DEV_NULL "/dev/null"
+extern std::ostream &dout;                         
+
 #endif

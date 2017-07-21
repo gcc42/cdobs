@@ -10,3 +10,13 @@ set(cdobs_srcs
 add_executable(cdobs ${cdobs_srcs})
 target_link_libraries(cdobs sqlite3)
 
+add_executable(debug ${cdobs_srcs})
+target_link_libraries(debug sqlite3)
+set_target_properties(
+    debug 
+    PROPERTIES 
+        OUTPUT_NAME "cdobs"
+)
+target_compile_definitions(debug PRIVATE IS_DEBUG=1)
+
+

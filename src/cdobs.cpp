@@ -1,5 +1,6 @@
 #include "cdobs.h"
 #include <iostream>
+#include <fstream>
 #include <ctime>
 #include <vector>
 #include "config.h"
@@ -8,6 +9,13 @@
 #include "dberror.h"
 
 using namespace std;
+
+#ifdef IS_DEBUG
+ostream &dout = cout;
+#else
+std::ofstream devnull_file(DEV_NULL);
+ostream &dout = devnull_file;
+#endif 
 
 Cdobs::Cdobs (DbStore *store): state(S_NOINIT) {
 	this->store = store;

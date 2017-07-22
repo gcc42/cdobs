@@ -11,37 +11,37 @@
 
 using namespace std;
 
-static const string HELP_BUCKET = 
+static const string kHelpBucket = 
 "Usage: cdobs bucket \
 [help | create name | \
 list name | delete name]\n\
 where name is the bucket_name";
 
-static const string HELP_CDOBS = 
+static const string kHelpCdobs = 
 "Usage: cdobs \
 [help | bucket | object]\n\
 Hit one of the commands to know more \
 about them";
 
-static const string HELP_OBJECT = 
+static const string kHelpObject = 
 "Usage: cdobs object \
 [put -b bucket_name -f file_name object_name]";
 
-void com_help () {
-	cout << HELP_CDOBS << endl;
+void Help () {
+	cout << kHelpCdobs << endl;
 }
 
-void com_bucket_help () {
-	cout << HELP_BUCKET << endl;
+void BucketHelp () {
+	cout << kHelpBucket << endl;
 }
 
-void com_object_help () {
-	cout << HELP_OBJECT << endl;
+void ObjectHelp () {
+	cout << kHelpObject << endl;
 }
 
-int com_init () {
+int comInit () {
 	string err_msg;
-	int rc = setup_database(err_msg);
+	int rc = SetupDatabase(err_msg);
 	if (rc) {
 		cerr << "ERROR: " << ERR_INIT_FAILED
 		<< " " << err_msg << endl;
@@ -51,24 +51,24 @@ int com_init () {
 }
 
 
-int com_create_bucket (Cdobs *const cdobs, int argc,
+int comCreateBucket (Cdobs *const cdobs, int argc,
 	char **argv) {
-	int retValue = 0;
+	int ret_value = 0;
 	string bucket_name(argv[2]), err_msg;
-	int rc_cb = cdobs->create_bucket(bucket_name, err_msg);
+	int rc_cb = cdobs->CreateBucket(bucket_name, err_msg);
 	if (rc_cb) {
-		retValue = 1;		
+		ret_value = 1;		
 		cerr << "ERROR: " << ERR_CB_FAILED
 		<< err_msg << endl;
 	}		
 
-	return retValue;
+	return ret_value;
 }
 
-int com_list_buckets (Cdobs *const cdobs) {
+int comListBuckets (Cdobs *const cdobs) {
 	vector<Bucket> buckets;
 	string err_msg;
-	int rc = cdobs->list_buckets(buckets, err_msg);
+	int rc = cdobs->ListBuckets(buckets, err_msg);
 	if (rc) {
 		cout << "ERROR: " << err_msg << endl;
 		return 1;
@@ -84,22 +84,22 @@ int com_list_buckets (Cdobs *const cdobs) {
 	return 0;
 }
 
-int com_bucket (Cdobs *const cdobs, int argc, char **argv) {
+int comBucket (Cdobs *const cdobs, int argc, char **argv) {
 	if (argc < 2) {
-		return com_list_buckets(cdobs);
+		return comListBuckets(cdobs);
 	}
 
 	string arg1(argv[1]); int rc_op;
 	if (arg1 == "create") {
-		rc_op = com_create_bucket(cdobs, argc, argv);
+		rc_op = comCreateBucket(cdobs, argc, argv);
 	}
 	else {
-		com_bucket_help();
+		BucketHelp();
 		return 1;
 	}
 }
 
-int com_put_object (Cdobs *const cdobs, int argc,
+int comPutObject (Cdobs *const cdobs, int argc,
 	char **argv) {
 	string bucket_name, file_name, object_name;
 	for (int i = 2; i < argc; ++i) {
@@ -119,7 +119,7 @@ int com_put_object (Cdobs *const cdobs, int argc,
 	if (bucket_name == "" || object_name == ""
 		|| file_name == "") {
 		cout << ERR_INVALID_SYNTAX << endl;
-		com_object_help();
+		ObjectHelp();
 		return 1;
 	}
 
@@ -134,7 +134,7 @@ int com_put_object (Cdobs *const cdobs, int argc,
 	}
 
 	string err_msg;
-	int rc = cdobs->put_object(src, object_name,
+	int rc = cdobs->PutObject(src, object_name,
 		bucket_name, err_msg);
 	if (rc) {
 		cout << "ERROR: " << err_msg << endl;
@@ -143,17 +143,17 @@ int com_put_object (Cdobs *const cdobs, int argc,
 	return 0;
 }
 
-int com_object (Cdobs *const cdobs, int argc, char **argv) {
+int comObject (Cdobs *const cdobs, int argc, char **argv) {
 	if (argc < 2) {
-		com_object_help();
+		ObjectHelp();
 		return 0;
 	}
 	string err_msg, arg1(argv[1]);
 	if (arg1 == "put") {
-		return com_put_object(cdobs, argc, argv);
+		return comPutObject(cdobs, argc, argv);
 	}
 	else {
-		com_object_help();
+		ObjectHelp();
 		return 1;
 	}
 }
@@ -166,20 +166,20 @@ int com_object (Cdobs *const cdobs, int argc, char **argv) {
 int main(int argc, char **argv) {
 	dout << "Starting program cdobs" << endl; 
 	if (argc < 2) {
-		com_help();
+		Help();
 		exit(0);
 	}
 
 	int exit_code = 0;	
 	string arg1(argv[1]);
 	if (arg1 == "init") {
-		exit_code = com_init();
+		exit_code = comInit();
 	}
 	else  {
 		Cdobs *cdobs;
-		int retValue = 0;
+		int ret_value = 0;
 		string err_msg;
-		int rc_init = init_cdobs(&cdobs, err_msg);
+		int rc_init = InitCdobs(&cdobs, err_msg);
 		if (rc_init) {
 			cout << "ERROR: " << err_msg << endl;
 			exit_code = 1;
@@ -187,13 +187,13 @@ int main(int argc, char **argv) {
 		else {
 			if (arg1 == "bucket") {
 				// send the rest of commands
-				exit_code = com_bucket(cdobs, argc - 1, argv + 1);
+				exit_code = comBucket(cdobs, argc - 1, argv + 1);
 			}
 			else if (arg1 == "object") {
-				exit_code = com_object(cdobs, argc - 1, argv + 1);
+				exit_code = comObject(cdobs, argc - 1, argv + 1);
 			}
 			else {
-				com_help();
+				Help();
 				exit_code = 1;
 			} 			
 		}

@@ -12,7 +12,7 @@ string create_query (string format, string schema) {
 	return string(buf);
 }
 
-int get_current_time (char *buffer, int len) {
+int GetCurrentTime (char *buffer, int len) {
 	time_t rawtime = time(nullptr);
 	tm *current_time = gmtime(&rawtime);
 	// SQLite expected date string format is "YYYY-MM-DD HH:MM:SS" (there are others too)

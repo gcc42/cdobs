@@ -4,5 +4,5 @@
 #include <string>
 #include "cdobs.h"
 
-int init_cdobs (Cdobs **cdobs, std::string &err_msg);
+int InitCdobs (Cdobs **cdobs, std::string &err_msg);
 #endif

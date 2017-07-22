@@ -33,47 +33,48 @@ struct Bucket {
  * done here */
 class DbStore {
 private:
-	static const std::string COUNT_OBJECTS;
-	static const std::string COUNT_BUCKETS;
-	static const std::string EXIST_BUCKET;
-	static const std::string INSERT_BUCKET;
-	static const std::string INSERT_OBJECT_ENTRY;
-	static const std::string INSERT_OBJECT_DATA;
-	static const std::string SELECT_ALL_BUCKETS;
-	static const std::string SELECT_BUCKET_ID;
-	static const std::string DELETE_BUCKET;
-	static const std::string DELETE_DATA;
-	static const std::string DELETE_OBJECT;
+	static const std::string kCountObjects;
+	static const std::string kCountBuckets;
+	static const std::string kExistBucket;
+	static const std::string kInsertBucket;
+	static const std::string kInsertObjectEntry;
+	static const std::string kInsertObjectData;
+	static const std::string kSelectAllBuckets;
+	static const std::string kSelectBucketId;
+	static const std::string kDeleteBucket;
+	static const std::string kDeleteData;
+	static const std::string kDeleteObject;
 
-	sqlite3 *sql_db;
-	int status;
-	int object_count;
-	sqlite3_stmt *prepare(const char *stmt_str);
-	int exec(char *stmt_str);
+	sqlite3 *sql_db_;
+	int status_;
+	int object_count_;
+	
+	sqlite3_stmt *Prepare(const char *stmt_str);
+	int Exec(char *stmt_str);
 public:
-	static bool check_db_init(sqlite3 *db);
+	static bool CheckDbInit(sqlite3 *db);
 	DbStore ();
 	~DbStore ();
-	int init (char *db_name);
+	int Init (char *db_name);
 	int good ();
-	int insert_bucket(int bucket_id, const char *name, char *time, 
+	int InsertBucket(int bucket_id, const char *name, char *time, 
 		int init_count);
-	int get_bucket_id(const char *name);
-	int get_bucket_count();
-	int get_object_count();
-	int empty_bucket(int bucket_id);
-	int delete_bucket(int bucket_id);
-	static int cb_list_buckets (void *data, int argc,
+	int GetBucketId(const char *name);
+	int GetBucketCount();
+	int GetObjectCount();
+	int EmptyBucket	(int bucket_id);
+	int DeleteBucket (int bucket_id);
+	static int cbListBuckets (void *data, int argc,
 		char **argv, char **azColName);
-	int select_all_buckets(std::vector<Bucket> &buckets,
+	int SelectAllBuckets (std::vector<Bucket> &buckets,
 		std::string &err_msg);
-	int delete_object (int id);
-	int create_object(const char *name, int bucket_id,\
+	int DeleteObject (int id);
+	int CreateObject (const char *name, int bucket_id,\
 		char *time, std::string &err_msg);
-	int create_object(const char *name, int bucket_id,
+	int CreateObject (const char *name, int bucket_id,
 		char *time, int size, std::string &err_msg);
-	int update_object_size(int id, int size);
-	int put_object(std::istream &src, int id, std::string &err_msg);
+	int UpdateObjectSize (int id, int size);
+	int PutObject (std::istream &src, int id, std::string &err_msg);
 };
 
 #endif

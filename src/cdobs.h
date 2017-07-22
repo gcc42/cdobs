@@ -12,23 +12,23 @@
 
 class Cdobs {
 private:
-	DbStore *store_;
-	int bucket_count_;
-	int state_;
+  DbStore *store_;
+  int bucket_count_;
+  int state_;
 public:
-	Cdobs(DbStore *store);
-	int good ();
-	/* Bucket operations */
-	int CreateBucket(std::string name, std::string &err_msg);
-	int DeleteBucket(std::string name);
-	int ListBuckets(std::vector<Bucket> &buckets,
-		std::string &err_msg);
+  Cdobs(DbStore *store);
+  int good ();
+  /* Bucket operations */
+  int CreateBucket(std::string name, std::string &err_msg);
+  int DeleteBucket(std::string name);
+  int ListBuckets(std::vector<Bucket> &buckets,
+      std::string &err_msg);
 
-	/* Object operations */
-	int PutObject(std::istream &src, std::string name,
-		std::string bucket_name, std::string &err_msg);
-	int DeleteObject();
-	int ListObjects();
+  /* Object operations */
+  int PutObject(std::istream &src, std::string name,
+      std::string bucket_name, std::string &err_msg);
+  int DeleteObject();
+  int ListObjects();
 };
 
 #endif

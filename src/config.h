@@ -13,10 +13,10 @@ const std::string SQL_CREATE = "CREATE TABLE %s;";
 
 const std::string BUCKET_SCHEMA = 
 "Bucket ( \
-	BucketID INTEGER PRIMARY KEY, \
-	BucketName VARCHAR UNIQUE, \
-	Created DATE, \
-	ObjectCount INTEGER \
+  BucketID INTEGER PRIMARY KEY, \
+  BucketName VARCHAR UNIQUE, \
+  Created DATE, \
+  ObjectCount INTEGER \
 )";
 // Bucket ACL: ??,
 // BuckerOwner: Interger REFERENCES User.Uid,
@@ -24,18 +24,18 @@ const std::string BUCKET_SCHEMA =
 
 const std::string OBJECT_DIR_SCHEMA =
 "ObjectDirectory ( \
-	ObjectID INTEGER PRIMARY KEY, \
-	ObjectName TEXT, \
-	BucketId INTEGER REFERENCES Bucket, \
-	Created DATE, \
-	Size INTEGER \
+  ObjectID INTEGER PRIMARY KEY, \
+  ObjectName TEXT, \
+  BucketId INTEGER REFERENCES Bucket, \
+  Created DATE, \
+  Size INTEGER \
 )";
 
 const std::string OBJECT_STORE_SCHEMA = 
 "ObjectStore ( \
-	ObjectID INTEGER REFERENCES ObjectDirectory, \
-	Data BLOB, \
-	PRIMARY KEY(ObjectID) \
+  ObjectID INTEGER REFERENCES ObjectDirectory, \
+  Data BLOB, \
+  PRIMARY KEY(ObjectID) \
 )";
 
 // Debug output 

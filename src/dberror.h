@@ -3,15 +3,24 @@
 
 #include <string>
 
-extern const std::string ERR_DB_NOINIT;
-extern const std::string ERR_CDOBS_NOINIT;
-extern const std::string ERR_INIT_FAILED;
-extern const std::string ERR_CB_FAILED;
-extern const std::string ERR_CANT_CREATE_FILE;
-extern const std::string ERR_CANT_SETUP_TABLE;
-extern const std::string ERR_BUCKET_ALREADY_EXIST;
-extern const std::string ERR_INVALID_BUCKET_NAME;
-extern const std::string ERR_OBJECT_TOO_LARGE;
-extern const std::string ERR_INVALID_SYNTAX;
-extern const std::string ERR_INVALID_FILE;
+extern const std::string kErrDbNoinit;
+extern const std::string kErrCdobsNoinit;
+
+// Operations
+extern const std::string kErrInitFailed;
+extern const std::string kErrCreateBucketFailed;
+extern const std::string kErrListBucketsFailed;
+extern const std::string kErrPutObjectFailed;
+
+// setup db errors
+extern const std::string kErrCantCreateFile;
+extern const std::string kErrCantSetupTable;
+
+// Cdobs errors
+extern const std::string kErrBucketAlreadyExists;
+extern const std::string kErrInvalidBucketName;
+extern const std::string kErrObjectTooLarge;
+extern const std::string kErrInvalidSyntax;
+extern const std::string kErrInvalidFile;
+
 #endif

@@ -4,42 +4,44 @@
 using namespace std;
 
 // init_cdobs errors
-const string ERR_DB_NOINIT = 
+const string kErrDbNoinit = 
 "Couldn't initialize database. \
 Either the file doesn't exist or it has not \
 been initialized. Run `cdobs init' to initialize database";
 
-const string ERR_CDOBS_NOINIT = 
+const string kErrCdobsNoinit = 
 "Couldn't initialize cdobs. \
 The database may be in an inconsistent state.";
 
 // Command Error Messages
-const string ERR_INIT_FAILED = "Operation `init' failed.";
-const string ERR_CB_FAILED = "Operation `create_bucket' failed.";
+const string kErrInitFailed = "Operation `init' failed:";
+const string kErrCreateBucketFailed = "Operation `create_bucket' failed:";
+const string kErrListBucketsFailed = "Operation `list buckets' failed:";
+const string kErrPutObjectFailed = "Operation `put object' failed:";
 
 // setup db errors
-const string ERR_CANT_CREATE_FILE = 
+const string kErrCantCreateFile = 
 "Couldn't create the database file, please check if \
 the program has sufficient permissions";
 
-const string ERR_CANT_SETUP_TABLE = 
+const string kErrCantSetupTable = 
 "Sorry, there was a problem creating the sql tables. \
 Has the database already been initialized? Try deleting \
 the database file and run the command again.";
 
 // Cdobs errors
-const string ERR_BUCKET_ALREADY_EXIST = 
+const string kErrBucketAlreadyExists = 
 "Bucket already exists. \
 Please choose a different name.";
 
-const string ERR_INVALID_BUCKET_NAME =
+const string kErrInvalidBucketName =
 "Invalid bucket name: ";
 
-const string ERR_OBJECT_TOO_LARGE =
+const string kErrObjectTooLarge =
 "Object size is too large. Max object size is: 5MB";
 
-const string ERR_INVALID_SYNTAX = 
+const string kErrInvalidSyntax = 
 "Invalid Syntax: ";
 
-const string ERR_INVALID_FILE = 
+const string kErrInvalidFile = 
 "Invalid File: ";

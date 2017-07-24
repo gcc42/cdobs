@@ -11,18 +11,26 @@
   * sql database */ 
 
 class Cdobs {
+
 private:
   DbStore *store_;
   int bucket_count_;
   int state_;
+
+  int DeleteObject(const int bucket_id, const int object_id,
+                  std::string &err_msg);
+  int DeleteObject(const int bucket_id, const std::string &name,
+                  std::string &err_msg);
+
 public:
   Cdobs(DbStore *store);
   int good ();
+
   /* Bucket operations */
   int CreateBucket(std::string name, std::string &err_msg);
   int DeleteBucket(std::string name);
   int ListBuckets(std::vector<Bucket> &buckets,
-      std::string &err_msg);
+                  std::string &err_msg);
 
   /* Object operations */
   int PutObject(const char *file_name, const std::string &name,

@@ -101,20 +101,8 @@ int Cdobs::PutObject (istream &src, const string &name,
   }
 }
 
-int Cdobs::DeleteObject(const string &bucket_name, const string &name,
+int Cdobs::DeleteObject (const int bucket_id, const int object_id,
                         string &err_msg) {
-  int bucket_id = store_->GetBucketId(bucket_name.c_str());
-  if (bucket_id < 0) {
-    err_msg = kErrInvalidBucketName + bucket_name;
-    return -1;
-  }
-
-  int object_id = store_->GetObjectId(bucket_id, name.c_str());
-  if (object_id < 0) {
-    err_msg = kErrInvalidObjectName + bucket_name;
-    return -1;
-  }
-
   int rc_dd = store_->DeleteObjectData(object_id);
   if (rc_dd) {
     err_msg = "Error deleting object data";
@@ -129,6 +117,28 @@ int Cdobs::DeleteObject(const string &bucket_name, const string &name,
   }
 
   return 0;
+}
+
+int Cdobs::DeleteObject (const int bucket_id, const string &name,
+                        string &err_msg) {
+  int object_id = store_->GetObjectId(bucket_id, name.c_str());
+  if (object_id < 0) {
+    err_msg = kErrInvalidObjectName + name;
+    return -1;
+  }
+
+  return DeleteObject(bucket_id, object_id, err_msg);
+}
+
+int Cdobs::DeleteObject(const string &bucket_name, const string &name,
+                        string &err_msg) {
+  int bucket_id = store_->GetBucketId(bucket_name.c_str());
+  if (bucket_id < 0) {
+    err_msg = kErrInvalidBucketName + bucket_name;
+    return -1;
+  }
+
+  return DeleteObject(bucket_id, name, err_msg);
 }
 
 int Cdobs::ListObjects(

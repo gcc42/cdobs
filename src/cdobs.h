@@ -25,9 +25,12 @@ public:
       std::string &err_msg);
 
   /* Object operations */
-  int PutObject(std::istream &src, std::string name,
-      std::string bucket_name, std::string &err_msg);
-  int DeleteObject();
+  int PutObject(const char *file_name, const std::string &name,
+                const std::string &bucket_name, std::string &err_msg);
+  int PutObject(std::istream &src, const std::string &name,
+                const std::string &bucket_name, std::string &err_msg);
+  int DeleteObject(const std::string &name, const std::string &bucket_name,
+                  std::string &err_msg);
   int ListObjects();
 };
 

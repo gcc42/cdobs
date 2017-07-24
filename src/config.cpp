@@ -8,6 +8,8 @@ const std::string kDefaultDbPath = "./";
 
 const int kMaxTimeLength = 100;
 
+const int kMaxObjectSize = 5000000;
+
 const std::string kDevNullFileName = "/dev/null";
 
 #ifdef IS_DEBUG

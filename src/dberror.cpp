@@ -1,3 +1,4 @@
+#include "config.h"
 #include "dberror.h"
 #include <string>
 
@@ -14,10 +15,11 @@ const string kErrCdobsNoinit =
 The database may be in an inconsistent state.";
 
 // Command Error Messages
-const string kErrInitFailed = "Operation `init' failed:";
-const string kErrCreateBucketFailed = "Operation `create_bucket' failed:";
-const string kErrListBucketsFailed = "Operation `list buckets' failed:";
-const string kErrPutObjectFailed = "Operation `put object' failed:";
+const string kErrInitFailed = "Operation `init' failed: ";
+const string kErrCreateBucketFailed = "Operation `create_bucket' failed: ";
+const string kErrListBucketsFailed = "Operation `list buckets' failed: ";
+const string kErrPutObjectFailed = "Operation `put object' failed: ";
+const string kErrDeleteObjectFailed = "Operation `delete object' failed: ";
 
 // setup db errors
 const string kErrCantCreateFile = 
@@ -37,8 +39,11 @@ Please choose a different name.";
 const string kErrInvalidBucketName =
 "Invalid bucket name: ";
 
+const string kErrInvalidObjectName =
+"No such object in bucket: ";
+
 const string kErrObjectTooLarge =
-"Object size is too large. Max object size is: 5MB";
+"Object size is too large. Max object size is: 5 Mb";
 
 const string kErrInvalidSyntax = 
 "Invalid Syntax: ";

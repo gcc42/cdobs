@@ -10,6 +10,7 @@
 #include "dbstore.h"
 #include "cdobs.h"
 #include "dberror.h"
+#include <getopt.h>
 
 using namespace std;
 
@@ -30,7 +31,7 @@ list name | delete name]\n\
 where name is the bucket_name";
 
 static const string kHelpCdobs = 
-"Usage: cdobs \
+"Usage: cdobs [--db file_name]\
 [help | bucket | object]\n\
 Hit one of the commands to know more \
 about them";
@@ -66,7 +67,7 @@ int cmdInit (int argc, char **argv, const string &db_file) {
   int rc = SetupDatabase(db_file, err_msg);
   if (rc) {
     cout << "ERROR: " << kErrInitFailed
-    << " " << err_msg << endl;
+    << err_msg << endl;
     return 1;
   }
   return 0;
@@ -123,27 +124,47 @@ int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
 }
 
 int cmdPutObject (Cdobs *const cdobs, string &bucket_name,
-  string &object_name, string &file_name) {
-
+                  string &object_name, string &file_name) {
   if (bucket_name == "" || object_name == ""
-    || file_name == "") {
+      || file_name == "") {
     cout << kErrInvalidSyntax << endl;
     ObjectHelp();
     return 1;
   }
 
-  ifstream src(file_name.c_str(), ios::binary);
-  if (!src.good()) {
+  string err_msg;
+  int rc = cdobs->PutObject(file_name.c_str(), object_name,
+                            bucket_name, err_msg);
+  if (rc) {
     cout << "ERROR: " << kErrPutObjectFailed
-    << kErrInvalidFile << file_name << endl;
+    << err_msg << endl;
+    return 1;
+  }
+  return 0;
+}
+
+int cmdDeleteObject (Cdobs *const cdobs, string &bucket_name,
+                      string &object_name, string &file_name) {
+  if (file_name != "") {
+    cout << kErrInvalidSyntax << "-f not allowed with object delete" << endl;
+    ObjectHelp();
+    return 1;
+  }
+  else if (bucket_name == "") {
+    cout << kErrInvalidSyntax << "Missing bucket name parameter" << endl;
+    ObjectHelp();
+    return 1;
+  }
+  else if (object_name == "") {
+    cout << kErrInvalidSyntax << "Missing object name parameter" << endl;
+    ObjectHelp();
     return 1;
   }
 
   string err_msg;
-  int rc = cdobs->PutObject(src, object_name,
-    bucket_name, err_msg);
-  if (rc) {
-    cout << "ERROR: " << kErrPutObjectFailed
+  int rc_del = cdobs->DeleteObject(bucket_name, object_name, err_msg);
+  if (rc_del) {
+    cout << "ERROR: " << kErrDeleteObjectFailed
     << err_msg << endl;
     return 1;
   }
@@ -168,14 +189,23 @@ int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
     else if (i == argc - 1) {
       object_name = argv[i];
     }
+    else {
+      cout << kErrInvalidSyntax << argv[i] << endl;
+      ObjectHelp();
+      return 1;
+    }
   }
   string arg1(argv[1]);
   if (arg1 == "put") {
     return cmdPutObject(cdobs, bucket_name,
-        file_name, object_name);
+                        object_name, file_name);
+  }
+  else if (arg1 == "delete") {
+    return cmdDeleteObject(cdobs, bucket_name,
+                          object_name, file_name);  
   }
   else {
-    cout << kErrInvalidSyntax << " "
+    cout << kErrInvalidSyntax
     << arg1 << endl;
     ObjectHelp();
     return 1;

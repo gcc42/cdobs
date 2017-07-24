@@ -3,7 +3,6 @@
 
 #define MAX_QUERY_SIZE 2000
 #define SHORT_QUERY_SIZE 500
-#define MAX_OBJECT_SIZE 5000000 // 5 mb
 
 #define S_NOINIT -1
 #define S_GOOD 1
@@ -30,6 +29,7 @@ struct Bucket {
  * sanitation on user input functions to be
  * done here */
 class DbStore {
+
 private:
   static const std::string kCountObjects;
   static const std::string kCountBuckets;
@@ -39,6 +39,7 @@ private:
   static const std::string kInsertObjectData;
   static const std::string kSelectAllBuckets;
   static const std::string kSelectBucketId;
+  static const std::string kSelectObjectId;
   static const std::string kDeleteBucket;
   static const std::string kDeleteData;
   static const std::string kDeleteObject;
@@ -49,6 +50,9 @@ private:
 
   sqlite3_stmt *Prepare(const char *stmt_str);
   int Exec(char *stmt_str);
+  int ExecSingleValueQuery (const char *query, int *value);
+
+
 public:
   static bool CheckDbInit(sqlite3 *db);
   DbStore ();
@@ -58,21 +62,23 @@ public:
   int InsertBucket(int bucket_id, const char *name, char *time, 
     int init_count);
   int GetBucketId(const char *name);
+  int GetObjectId(int bucket_id, const char *name);
   int GetBucketCount();
   int GetObjectCount();
-  int EmptyBucket (int bucket_id);
-  int DeleteBucket (int bucket_id);
+  int EmptyBucket(int bucket_id);
+  int DeleteBucket(int bucket_id);
   static int cbListBuckets (void *data, int argc,
     char **argv, char **azColName);
-  int SelectAllBuckets (std::vector<Bucket> &buckets,
+  int SelectAllBuckets(std::vector<Bucket> &buckets,
     std::string &err_msg);
-  int DeleteObject (int id);
-  int CreateObject (const char *name, int bucket_id,\
+  int DeleteObjectEntry(int id);
+  int DeleteObjectData(int id);
+  int CreateObjectEntry(const char *name, int bucket_id,\
     char *time, std::string &err_msg);
-  int CreateObject (const char *name, int bucket_id,
+  int CreateObjectEntry(const char *name, int bucket_id,
     char *time, int size, std::string &err_msg);
-  int UpdateObjectSize (int id, int size);
-  int PutObject (std::istream &src, int id, std::string &err_msg);
+  int UpdateObjectSize(int id, int size);
+  int PutObjectData(std::istream &src, int id, std::string &err_msg);
 };
 
 #endif

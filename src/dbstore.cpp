@@ -46,6 +46,10 @@ const string DbStore::kSelectBucketId =
 "SELECT BucketID FROM Bucket \
 WHERE BucketName = '%s'";
 
+const string DbStore::kSelectObjectId = 
+"SELECT ObjectID FROM ObjectDirectory \
+WHERE ObjectName = '%s' and BucketID = %d";
+
 const string DbStore::kDeleteData =
 "DELETE FROM ObjectStore \
 WHERE ObjectID = %d";
@@ -72,23 +76,6 @@ bool DbStore::CheckDbInit (sqlite3 *db) {
 }
 
 DbStore::DbStore() : sql_db_(NULL), status_(S_NOINIT) {}
-
-int DbStore::GetObjectCount () {
-  char query[SHORT_QUERY_SIZE];
-  int writ = snprintf(query, SHORT_QUERY_SIZE,
-      kCountObjects.c_str());
-  sqlite3_stmt *stmt = Prepare(query);
-  if (sqlite3_step(stmt) == SQLITE_ROW) {
-    int count = 0;
-    char *count_str = (char *)sqlite3_column_text(stmt, 0);
-    sscanf(count_str, "%d", &count);
-    return count;
-  }
-  else {
-    sqlite3_finalize(stmt);
-    return -1;
-  }
-}
 
 int DbStore::Init (const char *db_name) {
   int ret_value = 0;
@@ -138,7 +125,7 @@ int DbStore::Exec (char *query) {
   int rc = sqlite3_exec(sql_db_, query, NULL, NULL, &err_msg);
   if (rc != SQLITE_OK) {
     if (err_msg) {
-      cout << err_msg;
+      dout << err_msg;
       sqlite3_free(err_msg);          
     }
     return -1;
@@ -146,12 +133,37 @@ int DbStore::Exec (char *query) {
   return 0;
 }
 
-int DbStore::GetBucketCount () {
-  sqlite3_stmt *stmt = Prepare(kCountBuckets.c_str());
+int DbStore::ExecSingleValueQuery (const char *query, int *value) {
+  sqlite3_stmt *stmt = Prepare(query);
+  if (!stmt) {
+    return -1;
+  }
+
   if (sqlite3_step(stmt) == SQLITE_ROW) {
-    char *count_str = (char *)sqlite3_column_text(stmt, 0);
-    int count = 0;
-    sscanf(count_str, "%d", &count);
+    char *result_str = (char *)sqlite3_column_text(stmt, 0);
+    *value = -1;
+    sscanf(result_str, "%d", value);
+    sqlite3_finalize(stmt);
+    return 0;
+  }
+  else {
+    return -1;
+  }
+}
+
+int DbStore::GetBucketCount () {
+  int count;
+  if (!ExecSingleValueQuery(kCountBuckets.c_str(), &count)) {
+    return count;
+  }
+  else {
+    return -1;
+  }
+}
+
+int DbStore::GetObjectCount () {
+  int count;
+  if (!ExecSingleValueQuery(kCountObjects.c_str(), &count)) {
     return count;
   }
   else {
@@ -160,7 +172,7 @@ int DbStore::GetBucketCount () {
 }
 
 int DbStore::InsertBucket (int bucket_id, const char *name,
-  char *time, int init_count) {
+                          char *time, int init_count) {
   char query[MAX_QUERY_SIZE];
   int writ = snprintf(query, MAX_QUERY_SIZE,
       kInsertBucket.c_str(), bucket_id, name, time, init_count);
@@ -181,7 +193,7 @@ int DbStore::DeleteBucket (int bucket_id) {
 }
 
 int DbStore::cbListBuckets (void *data, int argc,
-  char **argv, char **azColName) {
+                            char **argv, char **azColName) {
   vector<Bucket> *buckets = (vector<Bucket> *)data;
   
   int id, object_count_;
@@ -196,8 +208,7 @@ int DbStore::cbListBuckets (void *data, int argc,
   return 0;
 }
 
-int DbStore::SelectAllBuckets (vector<Bucket> &buckets,
-  string &err_msg) {
+int DbStore::SelectAllBuckets(vector<Bucket> &buckets, string &err_msg) {
   char *err_str;
   int rc = sqlite3_exec(sql_db_, kSelectAllBuckets.c_str(),
       &DbStore::cbListBuckets, (void *)&buckets, &err_str);
@@ -209,61 +220,71 @@ int DbStore::SelectAllBuckets (vector<Bucket> &buckets,
   return 0;
 }
 
-int DbStore::GetBucketId (const char *name) {
+int DbStore::GetBucketId(const char *name) {
   char query[MAX_QUERY_SIZE];
   int writ = snprintf(query, MAX_QUERY_SIZE,
-      kSelectBucketId.c_str(), name);
+                      kSelectBucketId.c_str(), name);
   if (writ < 0 || writ > MAX_QUERY_SIZE) {
     return -1;
   }
-  sqlite3_stmt *stmt = Prepare(query);
-  if (!stmt) {
+  int id;
+  if (ExecSingleValueQuery(query, &id)) {
     return -1;
-  }
-
-  if (sqlite3_step(stmt) == SQLITE_ROW) {
-    char *id_str = (char *)sqlite3_column_text(stmt, 0);
-    int id = -1;
-    sscanf(id_str, "%d", &id);
-    sqlite3_finalize(stmt);
-    return id;
   }
   else {
-    // Error Code: bucket not found
-    return -1;
+    return id;
   }
 }
+
+int DbStore::GetObjectId(int bucket_id, const char *name) {
+  char query[SHORT_QUERY_SIZE];
+  int writ = snprintf(query, SHORT_QUERY_SIZE, kSelectObjectId.c_str(), 
+                      name, bucket_id);
+  if (writ < 0 || writ > MAX_QUERY_SIZE) {
+    return -1;
+  }
+  int id = -1;
+  if (ExecSingleValueQuery(query, &id)) {
+    return -1;
+  }
+  else {
+    return id;
+  }
+} 
 
 /* Delete all objects from bucket
  * with given id 
  */
-int DbStore::EmptyBucket (int id) {
+int DbStore::EmptyBucket(int id) {
   // TO be implemented. 
 }
 
-int DbStore::DeleteObject (int id) {
+/* Delete the object data from ObjectStore
+ */
+int DbStore::DeleteObjectData(int id) {
   char query[SHORT_QUERY_SIZE];
   int writ = snprintf(query, SHORT_QUERY_SIZE,
-      kDeleteData.c_str(), id);
-  // first, delete object data
-  int rc = Exec(query);
-  if (rc != SQLITE_OK) {
-    return -1;
-  }
-  // Then delete the object entry
-  writ = snprintf(query, SHORT_QUERY_SIZE,
-      kDeleteObject.c_str(), id);
+                      kDeleteData.c_str(), id);
   return Exec(query);
 }
 
-int DbStore::CreateObject (const char *name, int bucket_id,
-  char *time, string &err_msg) {
-  // Default size, unknown before putting in the object
-  return CreateObject(name, bucket_id, time, 0, err_msg);    
+/* Delete the object entry from ObjectDirectory
+ */
+int DbStore::DeleteObjectEntry(int id) {
+  char query[SHORT_QUERY_SIZE];
+  int writ = snprintf(query, SHORT_QUERY_SIZE,
+                      kDeleteObject.c_str(), id);
+  return Exec(query);
 }
 
-int DbStore::CreateObject (const char *name, int bucket_id,
-  char *time, int size, string &err_msg) {
+int DbStore::CreateObjectEntry(const char *name, int bucket_id,
+                              char *time, string &err_msg) {
+  // Default size, unknown before putting in the object data
+  return CreateObjectEntry(name, bucket_id, time, 0, err_msg);    
+}
+
+int DbStore::CreateObjectEntry(const char *name, int bucket_id,
+                              char *time, int size, string &err_msg) {
   char query[MAX_QUERY_SIZE];
   int obj_id = ++object_count_;
   int writ = snprintf(query, MAX_QUERY_SIZE,
@@ -278,7 +299,7 @@ int DbStore::CreateObject (const char *name, int bucket_id,
 }
 
 /* Insert object data into the ObjectStore table */
-int DbStore::PutObject (istream &src, int id, string &err_msg) {
+int DbStore::PutObjectData (istream &src, int id, string &err_msg) {
   if (!src.good()) {
     err_msg = "Invalid file";
     return -1;
@@ -288,7 +309,7 @@ int DbStore::PutObject (istream &src, int id, string &err_msg) {
   streampos size = src.tellg();
   src.seekg(0);
 
-  if (size > MAX_OBJECT_SIZE) {
+  if (size > kMaxObjectSize) {
     err_msg = kErrObjectTooLarge;
     return -1;
   }

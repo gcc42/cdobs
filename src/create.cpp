@@ -27,7 +27,7 @@ const std::string OBJECT_DIR_SCHEMA =
 "ObjectDirectory ( \
   ObjectID INTEGER PRIMARY KEY, \
   ObjectName TEXT, \
-  BucketId INTEGER REFERENCES Bucket, \
+  BucketID INTEGER REFERENCES Bucket, \
   Created DATE, \
   Size INTEGER \
 )";

@@ -56,8 +56,23 @@ int Cdobs::ListBuckets (vector<Bucket> &buckets,
   return count; 
 }
 
-int Cdobs::PutObject (istream &src, string name,
-  string bucket_name, string &err_msg) {
+int Cdobs::PutObject (const char *file_name, const string &name,
+                      const string &bucket_name, string &err_msg) {
+  ifstream src;
+  if (file_name) {
+    src.open(file_name, ios::binary);
+  }
+
+  if (!file_name || !src.good()) {
+    err_msg = kErrInvalidFile + string(file_name);
+    return 1;
+  }
+
+  return PutObject(src, name, bucket_name, err_msg);
+}
+
+int Cdobs::PutObject (istream &src, const string &name,
+                      const string &bucket_name, string &err_msg) {
   
   char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
@@ -67,12 +82,12 @@ int Cdobs::PutObject (istream &src, string name,
     err_msg = kErrInvalidBucketName + " " + bucket_name;
     return -1; // Also set bucket not exists error code.
   }
-  int id = store_->CreateObject(name.c_str(), 
+  int id = store_->CreateObjectEntry(name.c_str(), 
     bucket_id, ctime, err_msg);
   if (id < 0) {
     return -1;
   }
-  int size = store_->PutObject(src, id, err_msg);
+  int size = store_->PutObjectData(src, id, err_msg);
   if (size == -1) {
     return -1; // Error status to object to large
   }
@@ -80,8 +95,34 @@ int Cdobs::PutObject (istream &src, string name,
   return size;
 }
 
-int Cdobs::DeleteObject () {
-  // To be implemented.
+int Cdobs::DeleteObject(const string &bucket_name, const string &name,
+                        string &err_msg) {
+  int bucket_id = store_->GetBucketId(bucket_name.c_str());
+  if (bucket_id < 0) {
+    err_msg = kErrInvalidBucketName + bucket_name;
+    return -1;
+  }
+
+  int object_id = store_->GetObjectId(bucket_id, name.c_str());
+  if (object_id < 0) {
+    err_msg = kErrInvalidObjectName + bucket_name;
+    return -1;
+  }
+
+  int rc_dd = store_->DeleteObjectData(object_id);
+  if (rc_dd) {
+    err_msg = "Error deleting object data";
+    return 1;
+  }
+
+  // Delete entry from ObjectStore
+  int rc_de = store_->DeleteObjectEntry(object_id);
+  if (rc_de) {
+    err_msg = "Error deleting object entry";
+    return 1;
+  }
+
+  return 0;
 }
 
 int Cdobs::ListObjects () {

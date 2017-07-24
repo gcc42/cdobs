@@ -19,6 +19,7 @@ extern const std::string kErrCantSetupTable;
 
 // Cdobs erro
 extern const std::string kErrBucketAlreadyExists;
+extern const std::string kErrObjectAlreadyExists;
 extern const std::string kErrInvalidBucketName;
 extern const std::string kErrInvalidObjectName;
 extern const std::string kErrObjectTooLarge;

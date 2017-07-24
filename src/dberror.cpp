@@ -36,6 +36,9 @@ const string kErrBucketAlreadyExists =
 "Bucket already exists. \
 Please choose a different name.";
 
+const string kErrObjectAlreadyExists = 
+"An object already exists in this bucket with name: ";
+
 const string kErrInvalidBucketName =
 "Invalid bucket name: ";
 

@@ -82,17 +82,24 @@ int Cdobs::PutObject (istream &src, const string &name,
     err_msg = kErrInvalidBucketName + " " + bucket_name;
     return -1; // Also set bucket not exists error code.
   }
-  int id = store_->CreateObjectEntry(name.c_str(), 
-    bucket_id, ctime, err_msg);
+  int id = store_->GetObjectId(bucket_id, name.c_str());
   if (id < 0) {
+    id = store_->CreateObjectEntry(name.c_str(), 
+      bucket_id, ctime, err_msg);
+    if (id < 0) {
+      return -1;
+    }
+    int size = store_->PutObjectData(src, id, err_msg);
+    if (size == -1) {
+      return -1; // Error status to object to large
+    }
+    store_->UpdateObjectSize(id, size);
+    return size;    
+  }
+  else {
+    err_msg = kErrObjectAlreadyExists + name;
     return -1;
   }
-  int size = store_->PutObjectData(src, id, err_msg);
-  if (size == -1) {
-    return -1; // Error status to object to large
-  }
-  store_->UpdateObjectSize(id, size);
-  return size;
 }
 
 int Cdobs::DeleteObject(const string &bucket_name, const string &name,

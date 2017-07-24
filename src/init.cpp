@@ -8,11 +8,12 @@
 using namespace std;
 /* Inits DbStore object, passes it to cdobs,
  * and return the cdobs object */
-int InitCdobs (Cdobs **cdobs, string &err_msg) {
+int InitCdobs (Cdobs **cdobs, const string &db_file,
+    string &err_msg) {
   DbStore *store = new DbStore();
   int ret_value = 0;
   // Init the DbStore object
-  int rc = store->Init(SQLITE_DB_FILE);
+  int rc = store->Init(db_file.c_str());
   if (rc) {
     err_msg = kErrDbNoinit;
     ret_value = 1;

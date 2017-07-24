@@ -53,7 +53,7 @@ public:
   static bool CheckDbInit(sqlite3 *db);
   DbStore ();
   ~DbStore ();
-  int Init (char *db_name);
+  int Init (const char *db_name);
   int good ();
   int InsertBucket(int bucket_id, const char *name, char *time, 
     int init_count);

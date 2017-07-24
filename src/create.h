@@ -7,5 +7,6 @@
 #include <string>
 
 /* Takes config from file config.h, for now */
-int SetupDatabase (std::string &err_msg);
+int SetupDatabase (const std::string &db_file,
+    std::string &err_msg);
 #endif

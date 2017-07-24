@@ -1,4 +1,5 @@
 set(cdobs_srcs
+  config.cpp
   cdobs.cpp
   dbstore.cpp
   create.cpp

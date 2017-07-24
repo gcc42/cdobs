@@ -90,7 +90,7 @@ int DbStore::GetObjectCount () {
   }
 }
 
-int DbStore::Init (char *db_name) {
+int DbStore::Init (const char *db_name) {
   int ret_value = 0;
   int ret = sqlite3_open(db_name, &sql_db_);
   if (ret != SQLITE_OK) {

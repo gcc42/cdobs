@@ -5,9 +5,9 @@ using namespace std;
 
 // init_cdobs errors
 const string kErrDbNoinit = 
-"Couldn't initialize database. \
-Either the file doesn't exist or it has not \
-been initialized. Run `cdobs init' to initialize database";
+"Couldn't read database. \
+Either the database file doesn't exist or it has not \
+been initialized. Run `cdobs init' to create and initialize database";
 
 const string kErrCdobsNoinit = 
 "Couldn't initialize cdobs. \

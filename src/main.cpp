@@ -1,7 +1,9 @@
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
+#include <vector>
+#include <map>
 #include "config.h"
 #include "init.h"
 #include "create.h"
@@ -10,6 +12,16 @@
 #include "dberror.h"
 
 using namespace std;
+
+// Enums of all named args to
+// cdobs, like --db for exampel
+enum NamedArg {
+  DB = 1
+};
+
+// "" becaue the NamedArg enum starts from 
+// 1
+vector<string> named_arg_list { "", "db" };
 
 static const string kHelpBucket = 
 "Usage: cdobs bucket \
@@ -27,8 +39,14 @@ static const string kHelpObject =
 "Usage: cdobs object \
 [put -b bucket_name -f file_name object_name]";
 
+
 void Help () {
   cout << kHelpCdobs << endl;
+}
+
+void InvalidSyntax () {
+  cout << kErrInvalidSyntax << endl;
+  Help();
 }
 
 void BucketHelp () {
@@ -39,11 +57,15 @@ void ObjectHelp () {
   cout << kHelpObject << endl;
 }
 
-int comInit () {
+int cmdInit (int argc, char **argv, const string &db_file) {
+  if (argc > 1) {
+    InvalidSyntax();
+    return 1;
+  }
   string err_msg;
-  int rc = SetupDatabase(err_msg);
+  int rc = SetupDatabase(db_file, err_msg);
   if (rc) {
-    cerr << "ERROR: " << kErrInitFailed
+    cout << "ERROR: " << kErrInitFailed
     << " " << err_msg << endl;
     return 1;
   }
@@ -51,7 +73,7 @@ int comInit () {
 }
 
 
-int comCreateBucket (Cdobs *const cdobs, int argc,
+int cmdCreateBucket (Cdobs *const cdobs, int argc,
   char **argv) {
   int ret_value = 0;
   string bucket_name(argv[2]), err_msg;
@@ -65,7 +87,7 @@ int comCreateBucket (Cdobs *const cdobs, int argc,
   return ret_value;
 }
 
-int comListBuckets (Cdobs *const cdobs) {
+int cmdListBuckets (Cdobs *const cdobs) {
   vector<Bucket> buckets;
   string err_msg;
   int rc = cdobs->ListBuckets(buckets, err_msg);
@@ -84,14 +106,15 @@ int comListBuckets (Cdobs *const cdobs) {
   return 0;
 }
 
-int comBucket (Cdobs *const cdobs, int argc, char **argv) {
+int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
+  dout << "In cmdBucket" << endl;
   if (argc < 2) {
-    return comListBuckets(cdobs);
+    return cmdListBuckets(cdobs);
   }
 
   string arg1(argv[1]); int rc_op;
   if (arg1 == "create") {
-    rc_op = comCreateBucket(cdobs, argc, argv);
+    rc_op = cmdCreateBucket(cdobs, argc, argv);
   }
   else {
     BucketHelp();
@@ -99,22 +122,8 @@ int comBucket (Cdobs *const cdobs, int argc, char **argv) {
   }
 }
 
-int comPutObject (Cdobs *const cdobs, int argc,
-  char **argv) {
-  string bucket_name, file_name, object_name;
-  for (int i = 2; i < argc; ++i) {
-    if (!std::strcmp(argv[i], "-b")) {
-      bucket_name = argv[i + 1];
-      i++;
-    }
-    else if (!std::strcmp(argv[i], "-f")) {
-      file_name = argv[i + 1];
-      i++;
-    }
-    else if (i == argc - 1) {
-      object_name = argv[i];
-    }
-  }
+int cmdPutObject (Cdobs *const cdobs, string &bucket_name,
+  string &object_name, string &file_name) {
 
   if (bucket_name == "" || object_name == ""
     || file_name == "") {
@@ -122,9 +131,6 @@ int comPutObject (Cdobs *const cdobs, int argc,
     ObjectHelp();
     return 1;
   }
-
-  dout << bucket_name << " " << object_name << "  "
-  << file_name << endl;
 
   ifstream src(file_name.c_str(), ios::binary);
   if (!src.good()) {
@@ -144,14 +150,29 @@ int comPutObject (Cdobs *const cdobs, int argc,
   return 0;
 }
 
-int comObject (Cdobs *const cdobs, int argc, char **argv) {
+int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
   if (argc < 2) {
     ObjectHelp();
     return 0;
   }
-  string err_msg, arg1(argv[1]);
+  string bucket_name, file_name, object_name;
+  for (int i = 2; i < argc; ++i) {
+    if (!std::strcmp(argv[i], "-b")) {
+      bucket_name = argv[i + 1];
+      i++;
+    }
+    else if (!std::strcmp(argv[i], "-f")) {
+      file_name = argv[i + 1];
+      i++;
+    }
+    else if (i == argc - 1) {
+      object_name = argv[i];
+    }
+  }
+  string arg1(argv[1]);
   if (arg1 == "put") {
-    return comPutObject(cdobs, argc, argv);
+    return cmdPutObject(cdobs, bucket_name,
+        file_name, object_name);
   }
   else {
     cout << kErrInvalidSyntax << " "
@@ -161,39 +182,111 @@ int comObject (Cdobs *const cdobs, int argc, char **argv) {
   }
 }
 
+// Named args are those that are
+// specified with - or --, eg. --db
+static
+int GetNamedArg (char *p_arg) {
+  if (p_arg[0] != '-') {
+    dout << p_arg << " NOt a named arg" << endl;
+    return 0; // Not a named arg
+  }
+  char *arg = (p_arg[1] == '-') ? &p_arg[2]
+      : &p_arg[1];
+  for (int i = 1; i < named_arg_list.size(); ++i) {
+    if (named_arg_list[i] == arg) {
+      dout << "Comp string with char * successful" << endl;
+      return i;
+    }
+  }
+  return -1;
+}
+
+static
+int ParseArgs (int &argc, char **&argv, 
+  map<int, char *> &arg_map) {
+  // Advance through 1 for name of prog
+  // i.e cdobs
+  argc--; ++argv;
+  int i = 0, arg;
+  while (i < argc) {
+    arg = GetNamedArg(argv[i]);
+    if (!arg) {
+      // Not a named arg
+      return 0;
+    }
+    else if (arg == -1) {
+      // Invalid named arg
+      InvalidSyntax();
+      return -1;
+    }
+    else {
+      if (i + 1 == argc) {
+        InvalidSyntax();
+        return -1;
+      }
+      if (!arg_map.insert(std::pair<int, char *>(
+          arg, argv[i + 1])).second) {
+        // Already exists entry, undefined.
+        InvalidSyntax();
+        return -1;
+      }
+    }
+    i += 2;
+    argc -= 2;
+    argv += 2;
+  }
+  return 0;
+}
+
 // TODO: 
 // 1. Add a help message.
 // 2. Case insentivity, etc. 
 // 2. Use a proper parser to parse
 // arguments. 
 int main(int argc, char **argv) {
-  dout << "Starting program cdobs" << endl; 
-  if (argc < 2) {
+  dout << "Starting program cdobs" << endl;
+  int c_argc = argc; char **c_argv = argv;
+  if (c_argc < 2) {
     Help();
-    exit(0);
+    return 0;
   }
 
+  map<int, char *> arg_map;
+  int rc_parse = ParseArgs(c_argc, c_argv, arg_map);
+  if (rc_parse) {
+    return 1;
+  }
+  string db_file;
+  if (arg_map.count(DB)) {
+    db_file = arg_map[DB];
+  }
+  else {
+    db_file = kDefaultDbPath + kDefaultDbFile;
+  }
+
+  dout << "DB file is: " << db_file << endl;
+
   int exit_code = 0;  
-  string arg1(argv[1]);
-  if (arg1 == "init") {
-    exit_code = comInit();
+  string cmd(c_argv[0]);
+  if (cmd == "init") {
+    exit_code = cmdInit(c_argc, c_argv, db_file);
   }
   else  {
     Cdobs *cdobs;
     int ret_value = 0;
     string err_msg;
-    int rc_init = InitCdobs(&cdobs, err_msg);
+    int rc_init = InitCdobs(&cdobs, db_file, err_msg);
     if (rc_init) {
       cout << "ERROR: " << err_msg << endl;
       exit_code = 1;
     }
     else {
-      if (arg1 == "bucket") {
+      if (cmd == "bucket") {
         // send the rest of commands
-        exit_code = comBucket(cdobs, argc - 1, argv + 1);
+        exit_code = cmdBucket(cdobs, c_argc, c_argv);
       }
-      else if (arg1 == "object") {
-        exit_code = comObject(cdobs, argc - 1, argv + 1);
+      else if (cmd == "object") {
+        exit_code = cmdObject(cdobs, c_argc, c_argv);
       }
       else {
         Help();
@@ -202,5 +295,5 @@ int main(int argc, char **argv) {
     }
   }
 
-  exit(exit_code);
+  return exit_code;
 }

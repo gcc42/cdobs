@@ -10,24 +10,53 @@
 
 using namespace std;
 
+const std::string SQL_CREATE = "CREATE TABLE %s;";
+
+const std::string BUCKET_SCHEMA = 
+"Bucket ( \
+  BucketID INTEGER PRIMARY KEY, \
+  BucketName VARCHAR UNIQUE, \
+  Created DATE, \
+  ObjectCount INTEGER \
+)";
+// Bucket ACL: ??,
+// BuckerOwner: Interger REFERENCES User.Uid,
+// Location: VARCHAR,
+
+const std::string OBJECT_DIR_SCHEMA =
+"ObjectDirectory ( \
+  ObjectID INTEGER PRIMARY KEY, \
+  ObjectName TEXT, \
+  BucketId INTEGER REFERENCES Bucket, \
+  Created DATE, \
+  Size INTEGER \
+)";
+
+const std::string OBJECT_STORE_SCHEMA = 
+"ObjectStore ( \
+  ObjectID INTEGER REFERENCES ObjectDirectory, \
+  Data BLOB, \
+  PRIMARY KEY(ObjectID) \
+)";
+
 // path must be a valid fully qualified path
-static int CreateDb (string path, string file_name) {
-  ofstream db_file(path + file_name, ios::binary);
+static int CreateDb (const string &file_name) {
+  ofstream db_file(file_name, ios::binary);
   if (!db_file.good())
     return -1;
   return 0;
 }
 
-static bool FileExists (string path, string file_name) {
-  ifstream file(path + file_name);
+static bool FileExists (const string &file_name) {
+  ifstream file(file_name);
   int ret = file.good();
   file.close();
   return ret;
 }
 
-static int SetupTables (string path, string file_name) {
+static int SetupTables (const string &file_name) {
   sqlite3 *db;
-  sqlite3_open((path + file_name).c_str(), &db);
+  sqlite3_open(file_name.c_str(), &db);
   if (DbStore::CheckDbInit(db)) {
     return 1;
   }
@@ -59,16 +88,16 @@ static int SetupTables (string path, string file_name) {
   return SUCCESS;
 }
 
-int SetupDatabase (string &err_msg) {
-  if (!FileExists(DB_PATH, SQLITE_DB_FILE)) {
-    int rc_create = CreateDb(DB_PATH, SQLITE_DB_FILE);
+int SetupDatabase (const string &db_file, string &err_msg) {
+  if (!FileExists(db_file)) {
+    int rc_create = CreateDb(db_file);
     if (rc_create) {
       err_msg = kErrCantCreateFile;
       return -1;
     }
   }
 
-  int rc_setup = SetupTables(DB_PATH, SQLITE_DB_FILE);
+  int rc_setup = SetupTables(db_file);
   if (rc_setup) {
     err_msg = kErrCantSetupTable;
     return -1;

@@ -4,5 +4,6 @@
 #include <string>
 #include "cdobs.h"
 
-int InitCdobs (Cdobs **cdobs, std::string &err_msg);
+int InitCdobs (Cdobs **cdobs, const std::string &db_file,
+	std::string &err_msg);
 #endif

@@ -10,13 +10,6 @@
 
 using namespace std;
 
-#ifdef IS_DEBUG
-ostream &dout = cout;
-#else
-std::ofstream devnull_file(DEV_NULL);
-ostream &dout = devnull_file;
-#endif 
-
 Cdobs::Cdobs (DbStore *store_): state_(S_NOINIT) {
   this->store_ = store_;
   state_ = store_->good() ? S_GOOD : !S_GOOD;
@@ -28,9 +21,9 @@ int Cdobs::good () {
 }
 
 int Cdobs::CreateBucket (string name, string &err_msg) {
-  char ctime[MAX_TIME_LENGTH];
+  char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
-  int writ = GetCurrentTime(ctime, MAX_TIME_LENGTH);
+  int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int bucket_id = ++bucket_count_;
   int intial_obj_count = 0;
 
@@ -66,9 +59,9 @@ int Cdobs::ListBuckets (vector<Bucket> &buckets,
 int Cdobs::PutObject (istream &src, string name,
   string bucket_name, string &err_msg) {
   
-  char ctime[MAX_TIME_LENGTH];
+  char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
-  int writ = GetCurrentTime(ctime, MAX_TIME_LENGTH);
+  int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int bucket_id = store_->GetBucketId(bucket_name.c_str());
   if (bucket_id < 0) {
     err_msg = kErrInvalidBucketName + " " + bucket_name;

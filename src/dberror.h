@@ -16,7 +16,7 @@ extern const std::string kErrPutObjectFailed;
 extern const std::string kErrCantCreateFile;
 extern const std::string kErrCantSetupTable;
 
-// Cdobs errors
+// Cdobs erro
 extern const std::string kErrBucketAlreadyExists;
 extern const std::string kErrInvalidBucketName;
 extern const std::string kErrObjectTooLarge;

@@ -19,6 +19,7 @@ const string kErrInitFailed = "Operation `init' failed: ";
 const string kErrCreateBucketFailed = "Operation `create_bucket' failed: ";
 const string kErrListBucketsFailed = "Operation `list buckets' failed: ";
 const string kErrPutObjectFailed = "Operation `put object' failed: ";
+const string kErrListObjectFailed = "Operation `list object' failed: ";
 const string kErrDeleteObjectFailed = "Operation `delete object' failed: ";
 
 // setup db errors

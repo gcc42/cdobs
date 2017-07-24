@@ -31,7 +31,8 @@ public:
                 const std::string &bucket_name, std::string &err_msg);
   int DeleteObject(const std::string &name, const std::string &bucket_name,
                   std::string &err_msg);
-  int ListObjects();
+  int ListObjects(const std::string &bucket_name, std::vector<Object> &objects,
+                  std::string &err_msg);
 };
 
 #endif

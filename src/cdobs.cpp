@@ -132,6 +132,14 @@ int Cdobs::DeleteObject(const string &bucket_name, const string &name,
   return 0;
 }
 
-int Cdobs::ListObjects () {
-  // To be implemented.
+int Cdobs::ListObjects(
+    const string &bucket_name, vector<Object> &objects,
+    string &err_msg) {
+  int bucket_id = store_->GetBucketId(bucket_name.c_str());
+  if (bucket_id < 0) {
+    err_msg = kErrInvalidBucketName + bucket_name;
+    return -1;
+  }
+  
+  return store_->SelectObjectsInBucket(bucket_id, objects, err_msg);
 }

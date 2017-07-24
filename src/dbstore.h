@@ -18,10 +18,25 @@ struct Bucket {
   int object_count;
   
   Bucket(int p_id, char *p_name,  struct tm* time,
-    int count): id(p_id), name(p_name), created(time),
-    object_count(count) {}
+        int count): id(p_id), name(p_name), created(time),
+      object_count(count) {}
 
-  Bucket () {}
+  Bucket() {}
+};
+
+struct Object {
+  int id;
+  std::string name;
+  int bucket_id;
+  struct tm *created;
+  int size;
+
+  Object(int p_id, char *p_name, int p_bucketid,
+        struct tm *p_created, int p_size): id(p_id),
+      name(p_name), bucket_id(p_bucketid), created(p_created),
+      size(p_size) {}
+
+  Object() {}
 };
 
 /* DbStore class, wrappers over direct
@@ -43,6 +58,7 @@ private:
   static const std::string kDeleteBucket;
   static const std::string kDeleteData;
   static const std::string kDeleteObject;
+  static const std::string kSelectObjectsInBucket;
 
   sqlite3 *sql_db_;
   int status_;
@@ -52,7 +68,6 @@ private:
   int Exec(char *stmt_str);
   int ExecSingleValueQuery (const char *query, int *value);
 
-
 public:
   static bool CheckDbInit(sqlite3 *db);
   DbStore ();
@@ -60,7 +75,7 @@ public:
   int Init (const char *db_name);
   int good ();
   int InsertBucket(int bucket_id, const char *name, char *time, 
-    int init_count);
+                  int init_count);
   int GetBucketId(const char *name);
   int GetObjectId(int bucket_id, const char *name);
   int GetBucketCount();
@@ -68,17 +83,21 @@ public:
   int EmptyBucket(int bucket_id);
   int DeleteBucket(int bucket_id);
   static int cbListBuckets (void *data, int argc,
-    char **argv, char **azColName);
+                            char **argv, char **azColName);
   int SelectAllBuckets(std::vector<Bucket> &buckets,
-    std::string &err_msg);
+                      std::string &err_msg);
   int DeleteObjectEntry(int id);
   int DeleteObjectData(int id);
-  int CreateObjectEntry(const char *name, int bucket_id,\
-    char *time, std::string &err_msg);
   int CreateObjectEntry(const char *name, int bucket_id,
-    char *time, int size, std::string &err_msg);
+                        char *time, std::string &err_msg);
+  int CreateObjectEntry(const char *name, int bucket_id,
+                        char *time, int size, std::string &err_msg);
   int UpdateObjectSize(int id, int size);
   int PutObjectData(std::istream &src, int id, std::string &err_msg);
+  static int cbSelectObjects(void *data, int argc,
+                            char **argv, char **azColName);
+  int SelectObjectsInBucket(int bucket_id, std::vector<Object> &objects,
+                    std::string &err_msg);
 };
 
 #endif

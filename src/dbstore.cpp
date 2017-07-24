@@ -58,6 +58,11 @@ const string DbStore::kDeleteObject =
 "DELETE FROM ObjectDirectory \
 WHERE ObjectID = %d";
 
+const string DbStore::kSelectObjectsInBucket =
+"SELECT * FROM ObjectDirectory \
+WHERE BucketID = %d";
+
+
 /* Checks if the given db is initialized
  * for cdobs. Currently does this by checking 
  * if the table Bucket exists */
@@ -196,15 +201,15 @@ int DbStore::cbListBuckets (void *data, int argc,
                             char **argv, char **azColName) {
   vector<Bucket> *buckets = (vector<Bucket> *)data;
   
-  int id, object_count_;
+  int id, object_count;
   sscanf(argv[0], "%d", &id);
-  sscanf(argv[3], "%d", &object_count_);
+  sscanf(argv[3], "%d", &object_count);
   char *bucket_name = argv[1];
   struct tm* time = ParseTimeString(argv[2]);
 
-  Bucket *bucket = new Bucket(id, bucket_name,
-      time, object_count_);
-  buckets->push_back(*bucket);
+  Bucket bucket(id, bucket_name,
+                time, object_count);
+  buckets->push_back(bucket);
   return 0;
 }
 
@@ -351,7 +356,39 @@ int DbStore::PutObjectData (istream &src, int id, string &err_msg) {
   return 0;
 }
 
-int DbStore::UpdateObjectSize (int id, int size) {
+int DbStore::UpdateObjectSize(int id, int size) {
+  return 0;
+}
+
+int DbStore::cbSelectObjects(void *data, int argc,
+                            char **argv, char **azColName) {
+  vector<Object> *objects = (vector<Object> *)data;
+  int id, bucket_id, size;
+  sscanf(argv[0], "%d", &id);
+  sscanf(argv[2], "%d", &bucket_id);
+  sscanf(argv[4], "%d", &size);
+  char *object_name = argv[1];
+  struct tm* time = ParseTimeString(argv[3]);
+
+  Object object(id, object_name, bucket_id,
+                time, size);
+  objects->push_back(object);
+  return 0;
+}
+
+int DbStore::SelectObjectsInBucket(
+    int bucket_id, std::vector<Object> &objects, std::string &err_msg) {
+  char *err_str;
+  char query[SHORT_QUERY_SIZE];
+  int writ = snprintf(query, SHORT_QUERY_SIZE, 
+                      kSelectObjectsInBucket.c_str(), bucket_id);
+  int rc = sqlite3_exec(sql_db_, query, &DbStore::cbSelectObjects,
+                        (void *)&objects, &err_str);
+  if (rc != SQLITE_OK) {
+    err_msg = string(err_str);
+    sqlite3_free(err_str);
+    return -1;
+  }
   return 0;
 }
 

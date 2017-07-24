@@ -1,5 +1,6 @@
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -10,7 +11,7 @@
 #include "dbstore.h"
 #include "cdobs.h"
 #include "dberror.h"
-#include <getopt.h>
+#include "utils.h"
 
 using namespace std;
 
@@ -100,8 +101,15 @@ int cmdListBuckets (Cdobs *const cdobs) {
     cout << "No buckets in storage" << endl;
   }
   else {
+    cout << setw(5) << "ID" << " "
+    << setw(20) << "CREATED "
+    << setw(8) << "CNT "
+    << "  BUCKET NAME " << endl;
     for (auto b = buckets.begin(); b != buckets.end(); ++b) {
-      cout  << b->id << "   " << b->name << endl;
+      cout << setw(5) << b->id << " "
+      << setw(20) << put_time(b->created, TIME_FORMAT)
+      << setw(8) << b->object_count << " "
+      << "  " << b->name << endl;
     }   
   }
   return 0;
@@ -123,8 +131,8 @@ int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
   }
 }
 
-int cmdPutObject (Cdobs *const cdobs, string &bucket_name,
-                  string &object_name, string &file_name) {
+int cmdPutObject(Cdobs *const cdobs, string &bucket_name,
+                string &object_name, string &file_name) {
   if (bucket_name == "" || object_name == ""
       || file_name == "") {
     cout << kErrInvalidSyntax << endl;
@@ -143,8 +151,44 @@ int cmdPutObject (Cdobs *const cdobs, string &bucket_name,
   return 0;
 }
 
-int cmdDeleteObject (Cdobs *const cdobs, string &bucket_name,
-                      string &object_name, string &file_name) {
+int cmdListObjects(Cdobs *cdobs, string &bucket_name) {
+  if (bucket_name.empty()) {
+    cout << kErrInvalidSyntax << "-b bucket_name required" << endl;
+    return 1;
+  }
+  vector<Object> objects;
+  string err_msg;
+  int rc_list = cdobs->ListObjects(bucket_name, objects, err_msg);
+  if (!rc_list) {
+    if (!objects.empty()) {
+      Object obj;
+      cout << "Objects in bucket: " << bucket_name << endl;
+      cout << setw(5) << "ID" << " "
+      << setw(20) << "CREATED "
+      << setw(7) << "SIZE "
+      << "  NAME" << endl;
+      for (auto it = objects.begin(); it != objects.end(); ++it) {
+        obj = *it;
+        cout << setw(5) << obj.id << " "
+        << setw(20) << put_time(obj.created, TIME_FORMAT)
+        << setw(7) << obj.size << " "
+        << "  " << obj.name << endl;
+      }
+    }
+    else {
+      cout << "No objects in bucket: " << bucket_name << endl;
+    }
+  }
+  else {
+    cout << "ERROR: " << kErrListObjectFailed
+    << err_msg << endl;
+    return 1;
+  }
+  return 0;
+}
+
+int cmdDeleteObject(Cdobs *const cdobs, string &bucket_name,
+                    string &object_name, string &file_name) {
   if (file_name != "") {
     cout << kErrInvalidSyntax << "-f not allowed with object delete" << endl;
     ObjectHelp();
@@ -199,6 +243,9 @@ int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
   if (arg1 == "put") {
     return cmdPutObject(cdobs, bucket_name,
                         object_name, file_name);
+  }
+  else if (arg1 == "list") {
+    return cmdListObjects(cdobs, bucket_name);
   }
   else if (arg1 == "delete") {
     return cmdDeleteObject(cdobs, bucket_name,

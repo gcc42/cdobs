@@ -83,16 +83,25 @@ int Cdobs::PutObject (istream &src, const string &name,
   }
   int id = store_->GetObjectId(bucket_id, name.c_str());
   if (id < 0) {
-    id = store_->CreateObjectEntry(name.c_str(), 
-      bucket_id, ctime, err_msg);
-    if (id < 0) {
-      return -1;
+    store_->BeginTransaction();
+    int size = 0;
+    id = store_->CreateObjectEntry(name.c_str(), bucket_id, ctime, err_msg);
+    if (id >= 0) {
+      size = store_->PutObjectData(src, id, err_msg);
+      if (size > 0) {
+        store_->UpdateObjectSize(id, size);
+        if (store_->CommitTransaction()) {
+          size = -1;
+        }    
+      }
     }
-    int size = store_->PutObjectData(src, id, err_msg);
+    else {
+      size = -1;
+    }
+
     if (size < 0) {
-      return -1; // Error status to object to large
+      store_->RollbackTransaction();
     }
-    store_->UpdateObjectSize(id, size);
     return size;    
   }
   else {
@@ -103,20 +112,31 @@ int Cdobs::PutObject (istream &src, const string &name,
 
 int Cdobs::DeleteObject (const int bucket_id, const int object_id,
                         string &err_msg) {
+  store_->BeginTransaction();
   int rc_dd = store_->DeleteObjectData(object_id);
-  if (rc_dd) {
+  int ret_value = 0;
+  if (!rc_dd) {
+    int rc_de = store_->DeleteObjectEntry(object_id);
+    if (rc_de) {
+      err_msg = "Error deleting object entry";
+      ret_value = 1;
+    }
+    else {
+      int rc_commit = store_->CommitTransaction();
+      if (rc_commit) {
+        ret_value = 1;
+      }
+    }
+  }
+  else {
     err_msg = "Error deleting object data";
-    return 1;
+    ret_value = 1;
   }
 
-  // Delete entry from ObjectStore
-  int rc_de = store_->DeleteObjectEntry(object_id);
-  if (rc_de) {
-    err_msg = "Error deleting object entry";
-    return 1;
+  if (ret_value) {
+    store_->RollbackTransaction();
   }
-
-  return 0;
+  return ret_value;
 }
 
 int Cdobs::DeleteObject (const int bucket_id, const string &name,

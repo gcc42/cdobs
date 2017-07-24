@@ -46,6 +46,9 @@ struct Object {
 class DbStore {
 
 private:
+  static const std::string kBeginTrans;
+  static const std::string kCommitTrans;
+  static const std::string kRollbackTrans;
   static const std::string kCountObjects;
   static const std::string kCountBuckets;
   static const std::string kExistBucket;
@@ -66,15 +69,18 @@ private:
   int object_count_;
 
   sqlite3_stmt *Prepare(const char *stmt_str);
-  int Exec(char *stmt_str);
-  int ExecSingleValueQuery (const char *query, int *value);
+  int Exec(const char *query);
+  int ExecSingleValueQuery(const char *query, int *value);
 
 public:
   static bool CheckDbInit(sqlite3 *db);
-  DbStore ();
-  ~DbStore ();
-  int Init (const char *db_name);
-  int good ();
+  DbStore();
+  ~DbStore();
+  int Init(const char *db_name);
+  int good();
+  int BeginTransaction();
+  int CommitTransaction();
+  int RollbackTransaction();
   int InsertBucket(int bucket_id, const char *name, char *time, 
                   int init_count);
   int GetBucketId(const char *name);
@@ -83,8 +89,8 @@ public:
   int GetObjectCount();
   int EmptyBucket(int bucket_id);
   int DeleteBucket(int bucket_id);
-  static int cbListBuckets (void *data, int argc,
-                            char **argv, char **azColName);
+  static int cbListBuckets(void *data, int argc,
+                          char **argv, char **azColName);
   int SelectAllBuckets(std::vector<Bucket> &buckets,
                       std::string &err_msg);
   int DeleteObjectEntry(int id);
@@ -98,7 +104,7 @@ public:
   static int cbSelectObjects(void *data, int argc,
                             char **argv, char **azColName);
   int SelectObjectsInBucket(int bucket_id, std::vector<Object> &objects,
-                    std::string &err_msg);
+                            std::string &err_msg);
 };
 
 #endif

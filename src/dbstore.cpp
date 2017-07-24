@@ -7,6 +7,15 @@
 
 using namespace std;
 
+const string DbStore::kBeginTrans =
+"BEGIN TRANSACTION";
+
+const string DbStore::kCommitTrans =
+"COMMIT TRANSACTION";
+
+const string DbStore::kRollbackTrans =
+"ROLLBACK TRANSACTION";
+
 const string DbStore::kCountObjects =
 "SELECT Count(ObjectID) FROM ObjectDirectory";
 
@@ -116,6 +125,18 @@ int DbStore::good () {
   return (status_ == S_GOOD);
 }
 
+int DbStore::BeginTransaction() {
+  return Exec(kBeginTrans.c_str());
+}
+
+int DbStore::CommitTransaction() {
+  return Exec(kCommitTrans.c_str());
+}
+
+int DbStore::RollbackTransaction() {
+  return Exec(kRollbackTrans.c_str());
+}
+
 // Requires a UTF-8 stmt string 
 sqlite3_stmt *DbStore::Prepare (const char *stmt_str) {
   sqlite3_stmt *stmt;
@@ -129,7 +150,7 @@ sqlite3_stmt *DbStore::Prepare (const char *stmt_str) {
   }
 }
 
-int DbStore::Exec (char *query) {
+int DbStore::Exec (const char *query) {
   char *err_msg = NULL;
   int rc = sqlite3_exec(sql_db_, query, NULL, NULL, &err_msg);
   if (rc != SQLITE_OK) {

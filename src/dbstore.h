@@ -59,6 +59,7 @@ private:
   static const std::string kDeleteData;
   static const std::string kDeleteObject;
   static const std::string kSelectObjectsInBucket;
+  static const std::string kUpdateObjectSize;
 
   sqlite3 *sql_db_;
   int status_;

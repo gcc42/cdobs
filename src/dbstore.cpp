@@ -62,6 +62,10 @@ const string DbStore::kSelectObjectsInBucket =
 "SELECT * FROM ObjectDirectory \
 WHERE BucketID = %d";
 
+const string DbStore::kUpdateObjectSize =
+"UPDATE ObjectDirectory \
+SET Size=%d \
+WHERE ObjectID=%d";
 
 /* Checks if the given db is initialized
  * for cdobs. Currently does this by checking 
@@ -353,11 +357,14 @@ int DbStore::PutObjectData (istream &src, int id, string &err_msg) {
   }
   sqlite3_finalize(stmt);
   delete[] buffer;
-  return 0;
+  return size;
 }
 
 int DbStore::UpdateObjectSize(int id, int size) {
-  return 0;
+  char query[SHORT_QUERY_SIZE];
+  int writ = snprintf(query, SHORT_QUERY_SIZE,
+                      kUpdateObjectSize.c_str(), size, id);
+  return Exec(query);
 }
 
 int DbStore::cbSelectObjects(void *data, int argc,

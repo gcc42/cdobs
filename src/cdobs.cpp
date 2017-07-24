@@ -72,8 +72,7 @@ int Cdobs::PutObject (const char *file_name, const string &name,
 }
 
 int Cdobs::PutObject (istream &src, const string &name,
-                      const string &bucket_name, string &err_msg) {
-  
+                      const string &bucket_name, string &err_msg) { 
   char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
@@ -90,7 +89,7 @@ int Cdobs::PutObject (istream &src, const string &name,
       return -1;
     }
     int size = store_->PutObjectData(src, id, err_msg);
-    if (size == -1) {
+    if (size < 0) {
       return -1; // Error status to object to large
     }
     store_->UpdateObjectSize(id, size);

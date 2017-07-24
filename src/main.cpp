@@ -143,7 +143,7 @@ int cmdPutObject(Cdobs *const cdobs, string &bucket_name,
   string err_msg;
   int rc = cdobs->PutObject(file_name.c_str(), object_name,
                             bucket_name, err_msg);
-  if (rc) {
+  if (rc < 0) {
     cout << "ERROR: " << kErrPutObjectFailed
     << err_msg << endl;
     return 1;

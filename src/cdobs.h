@@ -21,6 +21,7 @@ private:
                   std::string &err_msg);
   int DeleteObject(const int bucket_id, const std::string &name,
                   std::string &err_msg);
+  int IsValidBucket(const std::string &bucket_name, std::string &err_msg);
 
 public:
   Cdobs(DbStore *store);

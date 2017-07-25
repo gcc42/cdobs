@@ -40,7 +40,7 @@ int Cdobs::CreateBucket (string name, string &err_msg) {
 }
 
 // Also needs to delete all objects first.
-int Cdobs::DeleteBucket (string name) {
+int Cdobs::DeleteBucket(string name) {
   int id = store_->GetBucketId(name.c_str());
   if (id == -1) {
     return 1;
@@ -50,14 +50,22 @@ int Cdobs::DeleteBucket (string name) {
   return err;
 }
 
-int Cdobs::ListBuckets (vector<Bucket> &buckets,
-  string &err_msg) {
+int Cdobs::ListBuckets(vector<Bucket> &buckets,
+                      string &err_msg) {
   int count = store_->SelectAllBuckets(buckets, err_msg);
   return count; 
 }
 
-int Cdobs::PutObject (const char *file_name, const string &name,
-                      const string &bucket_name, string &err_msg) {
+int Cdobs::IsValidBucket(const string &bucket_name, string &err_msg) {
+  int bucket_id = store_->GetBucketId(bucket_name.c_str());
+  if (bucket_id < 0) {
+    err_msg = kErrInvalidBucketName + " " + bucket_name;
+  }
+  return bucket_id;
+}
+
+int Cdobs::PutObject(const char *file_name, const string &name,
+                    const string &bucket_name, string &err_msg) {
   ifstream src;
   if (file_name) {
     src.open(file_name, ios::binary);
@@ -74,19 +82,26 @@ int Cdobs::PutObject (const char *file_name, const string &name,
 int Cdobs::PutObject (istream &src, const string &name,
                       const string &bucket_name, string &err_msg) { 
   char ctime[kMaxTimeLength];
-  // Get time as an "YYYY-MM-DD HH:MM:SS" format string
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
-  int bucket_id = store_->GetBucketId(bucket_name.c_str());
-  if (bucket_id < 0) {
-    err_msg = kErrInvalidBucketName + " " + bucket_name;
-    return -1; // Also set bucket not exists error code.
+  int bucket_id;
+  if ((bucket_id = IsValidBucket(bucket_name, err_msg)) < 0) {
+    return -1;
   }
+  dout << "p1";
   int id = store_->GetObjectId(bucket_id, name.c_str());
   if (id < 0) {
+    vector<int> object_ids;
+    if (store_->SelectAllObjectIds(object_ids)) {
+      return -1;
+    }
+    dout << "p2";
+    id = object_ids[object_ids.size() - 1] + 1;
     store_->BeginTransaction();
     int size = 0;
-    id = store_->CreateObjectEntry(name.c_str(), bucket_id, ctime, err_msg);
-    if (id >= 0) {
+    dout << "p3";
+    int rc_cr = store_->CreateObjectEntry(id, name.c_str(), 
+                                          bucket_id, ctime, err_msg);
+    if (!rc_cr) {
       size = store_->PutObjectData(src, id, err_msg);
       if (size > 0) {
         store_->UpdateObjectSize(id, size);
@@ -96,6 +111,7 @@ int Cdobs::PutObject (istream &src, const string &name,
       }
     }
     else {
+      dout << "p3";
       size = -1;
     }
 

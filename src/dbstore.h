@@ -63,6 +63,9 @@ private:
   static const std::string kDeleteObject;
   static const std::string kSelectObjectsInBucket;
   static const std::string kUpdateObjectSize;
+  static const std::string kSelectObjectIds;
+  static const std::string kSelectObjectIdsInBucket;
+  static const std::string kEnableForeignKey;
 
   sqlite3 *sql_db_;
   int status_;
@@ -70,7 +73,8 @@ private:
 
   sqlite3_stmt *Prepare(const char *stmt_str);
   int Exec(const char *query);
-  int ExecSingleValueQuery(const char *query, int *value);
+  int ExecValueQuery(const char *query, int *value);
+  int ExecVectorQuery(const char *query, std::vector<int> &values);
 
 public:
   static bool CheckDbInit(sqlite3 *db);
@@ -93,11 +97,13 @@ public:
                           char **argv, char **azColName);
   int SelectAllBuckets(std::vector<Bucket> &buckets,
                       std::string &err_msg);
+  int SelectObjectsIdsFromBucket(const int bucket_id,
+                                std::vector<int> &object_ids);
   int DeleteObjectEntry(int id);
   int DeleteObjectData(int id);
-  int CreateObjectEntry(const char *name, int bucket_id,
+  int CreateObjectEntry(const int id, const char *name, int bucket_id,
                         char *time, std::string &err_msg);
-  int CreateObjectEntry(const char *name, int bucket_id,
+  int CreateObjectEntry(const int id, const char *name, int bucket_id,
                         char *time, int size, std::string &err_msg);
   int UpdateObjectSize(int id, int size);
   int PutObjectData(std::istream &src, int id, std::string &err_msg);
@@ -105,6 +111,7 @@ public:
                             char **argv, char **azColName);
   int SelectObjectsInBucket(int bucket_id, std::vector<Object> &objects,
                             std::string &err_msg);
+  int SelectAllObjectIds(std::vector<int> &object_ids);
 };
 
 #endif

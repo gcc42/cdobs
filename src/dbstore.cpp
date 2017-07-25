@@ -38,14 +38,17 @@ const string DbStore::kInsertBucket =
 const string DbStore::kInsertObjectEntry = 
 "INSERT INTO ObjectDirectory \
  (ObjectID, ObjectName, BucketID, Created, Size, Lob) \
- VALUES \
- (%d, '%s', %d, '%s', %d, %d)";
+ VALUES (%d, '%s', %d, '%s', %d, %d)";
 
 const string DbStore::kInsertObjectData =
 "INSERT INTO ObjectStore \
 (ObjectID, Data) \
-VALUES \
-(%d, ?)";
+VALUES (%d, ?)";
+
+const string DbStore::kInsertLobData =
+"INSERT INTO LargeObjectStore \
+(ObjectID, Segment, SegmentSize, Data) \
+VALUES (%d, %d, %d, ?)";
 
 const string DbStore::kDeleteBucket = 
 "DELETE FROM Bucket \
@@ -369,42 +372,49 @@ int DbStore::CreateObjectEntry(
   return 0;
 }
 
-int DbStore::PutObjectData(const int id, istream &src, int size, 
-                          string &err_msg) {
+/* Insert size bytes of binary data into
+ * ObjectStore or LargeObjectStore depending on
+ * whether segment = -1 or segment > 0
+ */
+int DbStore::PutObjectData(const int id, istream &src, int size,
+                           int segment, string &err_msg) {
   char* buffer = new char[size];
   src.read(buffer, size);
+  int size_read = src.gcount();
 
-  // dout << buffer << endl;
   char query[SHORT_QUERY_SIZE];
-  int writ = snprintf(query, SHORT_QUERY_SIZE,
-      kInsertObjectData.c_str(), id);
+  int writ;
+  if (segment > 0) {
+    snprintf(query, SHORT_QUERY_SIZE, kInsertObjectData.c_str(), id);
+  }
+  else {
+    snprintf(query, SHORT_QUERY_SIZE, kInsertLobData.c_str(), id,
+            segment, size_read);
+  }
   dout << "Put object query: " << query << endl;
   sqlite3_stmt *stmt = Prepare(query);
   if (!stmt) {
     err_msg = "Prepare failed: " + string(sqlite3_errmsg(sql_db_));
-    return -1;
+    size_read = -1;
   }
   else {
     int rc;
-    // SQLITE_STATIC because the statement is finalized
-    // before the buffer is freed:
-    // Column 2 for the data column
-    rc = sqlite3_bind_blob(stmt, 1, buffer, src.gcount(), SQLITE_STATIC);
+    rc = sqlite3_bind_blob(stmt, 1, buffer, size_read, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
       err_msg = "Bind failed: " + string(sqlite3_errmsg(sql_db_));
-      return -1;
+      size_read = -1;
     } else {
       rc = sqlite3_step(stmt);
       if (rc != SQLITE_DONE) {
         err_msg = "Execution failed: "
             + string(sqlite3_errmsg(sql_db_));
-        return -1;
+        size_read = -1;
       }
     }
   }
   sqlite3_finalize(stmt);
   delete[] buffer;
-  return size;
+  return size_read;
 }
 
 /* Insert object data into the ObjectStore table */
@@ -422,7 +432,7 @@ int DbStore::PutObjectData(const int id, istream &src, string &err_msg) {
     err_msg = kErrObjectTooLarge;
     return -1;
   }
-  return PutObjectData(id, src, size, err_msg);
+  return PutObjectData(id, src, size, -1, err_msg);
 }
 
 int DbStore::UpdateObjectSize(int id, int size) {

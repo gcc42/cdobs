@@ -105,7 +105,9 @@ public:
   int CreateObjectEntry(const int id, const char *name, int bucket_id,
                         char *time, int size, int lob_flag, std::string &err_msg);
   int UpdateObjectSize(int id, int size);
-  int PutObjectData(std::istream &src, int id, std::string &err_msg);
+  int PutObjectData(const int id, std::istream &src, std::string &err_msg);
+  int PutObjectData(const int id, std::istream &src, int size, 
+                    int segment, std::string &err_msg);
   static int cbSelectObjects(void *data, int argc,
                             char **argv, char **azColName);
   int SelectObjectsInBucket(const int bucket_id, std::vector<Object> &objects,

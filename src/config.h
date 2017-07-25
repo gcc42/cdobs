@@ -9,6 +9,7 @@ extern const std::string kDefaultDbFile;
 extern const std::string kDefaultDbPath;
 extern const int kMaxTimeLength;
 extern const int kMaxObjectSize;
+extern const int kSegmentSize;
 
 // Debug output 
 extern const std::string kDevNull;

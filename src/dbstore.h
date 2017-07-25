@@ -66,6 +66,7 @@ private:
   static const std::string kSelectObjectIds;
   static const std::string kSelectObjectIdsInBucket;
   static const std::string kEnableForeignKey;
+  static const std::string kInsertLobData;
 
   sqlite3 *sql_db_;
   int status_;

@@ -12,32 +12,39 @@ using namespace std;
 
 const std::string SQL_CREATE = "CREATE TABLE %s;";
 
-const std::string BUCKET_SCHEMA = 
+const std::string kBucketSchema = 
 "Bucket ( \
   BucketID INTEGER PRIMARY KEY, \
   BucketName VARCHAR UNIQUE, \
   Created DATE, \
   ObjectCount INTEGER \
 )";
-// Bucket ACL: ??,
-// BuckerOwner: Interger REFERENCES User.Uid,
-// Location: VARCHAR,
 
-const std::string OBJECT_DIR_SCHEMA =
+const std::string kObjectDirSchema =
 "ObjectDirectory ( \
   ObjectID INTEGER PRIMARY KEY, \
   ObjectName TEXT, \
   BucketID INTEGER, \
   Created DATE, \
   Size INTEGER, \
+  Lob BOOLEAN, \
   FOREIGN KEY(BucketID) REFERENCES Bucket(BucketID) \
 )";
 
-const std::string OBJECT_STORE_SCHEMA = 
+const std::string kObjectStoreSchema = 
 "ObjectStore ( \
   ObjectID INTEGER REFERENCES ObjectDirectory, \
   Data BLOB, \
   PRIMARY KEY(ObjectID) \
+)";
+
+const std::string kLobStoreSchema = 
+"LargeObjectStore (
+  ObjectID INTEGER FOREIGN KEY REFERENCES ObjectDirectory, \
+  Segment Integer, \
+  Size of Segment INTEGER, \
+  Data BLOB, \
+  PRIMARY KEY(ObjectID, Segment) \
 )";
 
 // path must be a valid fully qualified path
@@ -65,23 +72,30 @@ static int SetupTables (const string &file_name) {
   char buf[MAX_QUERY_SIZE];
 
   // Create Bucket table
-  snprintf(buf, MAX_QUERY_SIZE,
-    SQL_CREATE.c_str(), BUCKET_SCHEMA.c_str());
+  snprintf(buf, MAX_QUERY_SIZE, SQL_CREATE.c_str(),
+          kBucketSchema.c_str());
   dout << buf;
   if (sqlite3_exec(db, buf, NULL, NULL, NULL) != SQLITE_OK) {
     return FAILURE;   
   }
 
   // Create object dirrectory table
-  snprintf(buf, MAX_QUERY_SIZE,
-    SQL_CREATE.c_str(), OBJECT_DIR_SCHEMA.c_str());
+  snprintf(buf, MAX_QUERY_SIZE, SQL_CREATE.c_str(),
+          kObjectDirSchema.c_str());
   if (sqlite3_exec(db, buf, NULL, NULL, NULL) != SQLITE_OK) {
     return FAILURE;   
   }
 
   // Create object store table
-  snprintf(buf, MAX_QUERY_SIZE,
-    SQL_CREATE.c_str(), OBJECT_STORE_SCHEMA.c_str());
+  snprintf(buf, MAX_QUERY_SIZE, SQL_CREATE.c_str(),
+          kObjectStoreSchema.c_str());
+  if (sqlite3_exec(db, buf, NULL, NULL, NULL) != SQLITE_OK) {
+    return FAILURE;   
+  }
+
+  // Create object store table
+  snprintf(buf, MAX_QUERY_SIZE, SQL_CREATE.c_str(),
+          kLobStoreSchema.c_str());
   if (sqlite3_exec(db, buf, NULL, NULL, NULL) != SQLITE_OK) {
     return FAILURE;   
   }

@@ -101,9 +101,9 @@ public:
   int DeleteObjectEntry(int id);
   int DeleteObjectData(int id);
   int CreateObjectEntry(const int id, const char *name, int bucket_id,
-                        char *time, std::string &err_msg);
+                        char *time, int lob_flag, std::string &err_msg);
   int CreateObjectEntry(const int id, const char *name, int bucket_id,
-                        char *time, int size, std::string &err_msg);
+                        char *time, int size, int lob_flag, std::string &err_msg);
   int UpdateObjectSize(int id, int size);
   int PutObjectData(std::istream &src, int id, std::string &err_msg);
   static int cbSelectObjects(void *data, int argc,

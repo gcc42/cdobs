@@ -42,4 +42,10 @@ Any output written to stream `dout` will output to console in this mode.
 ./cdobs bucket
 # Put object named makefile, with contents on Makefile in b1
 ./cdobs object put -b b1 -f Makefile makefile
+# List objects in bucket b1
+./cdobs object list -b b1
+# Delete object makafile in bucket b1
+./cdobs object delete -b b1 makefile
+# Delete bucekt b1
+./cdobs bucket delete b1
 ```

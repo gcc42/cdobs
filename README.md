@@ -31,6 +31,11 @@ Any output written to stream `dout` will output to console in this mode.
 ### Currently supported operations
 1. Init
 2. Create Bucket
+3. Delete Bucket
+4. List Buckets
+5. Put Object (Large and small objects)
+6. Delete Object
+7. List objects in bucket
 
 ### Example Usage
 ```bash

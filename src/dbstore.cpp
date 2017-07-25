@@ -352,7 +352,7 @@ int DbStore::DeleteObjectEntry(int id) {
 
 int DbStore::CreateObjectEntry(
     const int id, const char *name, const int bucket_id,
-    char *time, int lob_flag string &err_msg) {
+    char *time, int lob_flag, string &err_msg) {
   // Default size, unknown before putting in the object data
   return CreateObjectEntry(id, name, bucket_id, time, 0, lob_flag, err_msg);    
 }

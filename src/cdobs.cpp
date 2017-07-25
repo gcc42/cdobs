@@ -138,8 +138,6 @@ int Cdobs::NewObjectId() {
 
 int Cdobs::PutObject(istream &src, const string &name,
                     const string &bucket_name, string &err_msg) { 
-  char ctime[kMaxTimeLength];
-  int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int bucket_id;
   if ((bucket_id = IsValidBucket(bucket_name, err_msg)) < 0) {
     return -1;
@@ -166,13 +164,15 @@ int Cdobs::PutSmallObject(istream &src, const int id, const string &name,
                           const int bucket_id, string &err_msg) {
   store_->BeginTransaction();
   int size = 0;
+  char ctime[kMaxTimeLength];
+  int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
                                         ctime, 0, err_msg);
   if (!rc_cr) {
     size = -1;
   }
   else {
-    size = store_->PutObjectData(src, id, err_msg);
+    size = store_->PutObjectData(id, src, err_msg);
     if (size > 0) {
       store_->UpdateObjectSize(id, size);
       if (store_->CommitTransaction()) {
@@ -191,6 +191,8 @@ int Cdobs::PutLargeObject(istream &src, const int id, const string &name,
                           const int bucket_id, string &err_msg) {
   store_->BeginTransaction();
   int total_size = 0;
+  char ctime[kMaxTimeLength];
+  int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
                                         ctime, 1, err_msg);
   if (rc_cr) {
@@ -200,7 +202,7 @@ int Cdobs::PutLargeObject(istream &src, const int id, const string &name,
     int segment = 1, seg_size = 0;
     while (!src.eof()) {
       seg_size =
-        store_->PutObjectData(src, id, segment++, kSegmentSize, err_msg);     
+        store_->PutObjectData(id, src, segment++, kSegmentSize, err_msg);     
       if (seg_size >= 0) {
         total_size += seg_size;
       }

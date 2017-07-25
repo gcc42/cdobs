@@ -10,6 +10,7 @@ extern const std::string kErrCdobsNoinit;
 extern const std::string kErrInitFailed;
 extern const std::string kErrCreateBucketFailed;
 extern const std::string kErrListBucketsFailed;
+extern const std::string kErrDeleteBucketFailed;
 extern const std::string kErrPutObjectFailed;
 extern const std::string kErrListObjectFailed;
 extern const std::string kErrDeleteObjectFailed;
@@ -18,7 +19,8 @@ extern const std::string kErrDeleteObjectFailed;
 extern const std::string kErrCantCreateFile;
 extern const std::string kErrCantSetupTable;
 
-// Cdobs erro
+// Cdobs errors
+extern const std::string kErrEmptyingBucket;
 extern const std::string kErrBucketAlreadyExists;
 extern const std::string kErrObjectAlreadyExists;
 extern const std::string kErrInvalidBucketName;

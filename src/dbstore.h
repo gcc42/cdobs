@@ -91,13 +91,12 @@ public:
   int GetObjectId(int bucket_id, const char *name);
   int GetBucketCount();
   int GetObjectCount();
-  int EmptyBucket(int bucket_id);
-  int DeleteBucket(int bucket_id);
+  int DeleteBucketEntry(const int bucket_id);
   static int cbListBuckets(void *data, int argc,
                           char **argv, char **azColName);
   int SelectAllBuckets(std::vector<Bucket> &buckets,
                       std::string &err_msg);
-  int SelectObjectsIdsFromBucket(const int bucket_id,
+  int SelectObjectIdsInBucket(const int bucket_id,
                                 std::vector<int> &object_ids);
   int DeleteObjectEntry(int id);
   int DeleteObjectData(int id);
@@ -109,7 +108,7 @@ public:
   int PutObjectData(std::istream &src, int id, std::string &err_msg);
   static int cbSelectObjects(void *data, int argc,
                             char **argv, char **azColName);
-  int SelectObjectsInBucket(int bucket_id, std::vector<Object> &objects,
+  int SelectObjectsInBucket(const int bucket_id, std::vector<Object> &objects,
                             std::string &err_msg);
   int SelectAllObjectIds(std::vector<int> &object_ids);
 };

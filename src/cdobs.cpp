@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Cdobs::Cdobs (DbStore *store_): state_(S_NOINIT) {
+Cdobs::Cdobs(DbStore *store_): state_(S_NOINIT) {
   this->store_ = store_;
   state_ = store_->good() ? S_GOOD : !S_GOOD;
   bucket_count_ = store_->GetBucketCount();
@@ -20,7 +20,7 @@ int Cdobs::good () {
   return (state_ == S_GOOD);
 }
 
-int Cdobs::CreateBucket (string name, string &err_msg) {
+int Cdobs::CreateBucket(string name, string &err_msg) {
   char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
@@ -39,15 +39,43 @@ int Cdobs::CreateBucket (string name, string &err_msg) {
   return err;
 }
 
-// Also needs to delete all objects first.
-int Cdobs::DeleteBucket(string name) {
-  int id = store_->GetBucketId(name.c_str());
-  if (id == -1) {
-    return 1;
+int Cdobs::EmptyBucket(const int id, string &err_msg) {
+  vector<int> object_ids;
+  store_->SelectObjectIdsInBucket(id, object_ids);
+  for (auto it = object_ids.begin(); it != object_ids.end(); ++it) {
+    if (DeleteObject(id, *it, err_msg)) {
+      return -1;
+    }
   }
-  store_->EmptyBucket(id);
-  int err = store_->DeleteBucket(id);
-  return err;
+  return 0;
+}
+
+// Also needs to delete all objects first.
+int Cdobs::DeleteBucket(const string &name, string &err_msg) {
+  int id;
+  if ((id = IsValidBucket(name, err_msg)) < 0) {
+    return -1;
+  }
+  int ret_value = 0;
+  store_->BeginTransaction();
+  int rc_empty = EmptyBucket(id, err_msg);
+  if (!rc_empty) {
+    int err = store_->DeleteBucketEntry(id);
+    if (err) {
+      ret_value = -1;
+    }
+  }
+  else {
+    err_msg = kErrEmptyingBucket + name;
+    ret_value = -1;
+  }
+  if (ret_value) {
+    store_->RollbackTransaction();
+  }
+  else {
+    store_->CommitTransaction();
+  }
+  return ret_value;
 }
 
 int Cdobs::ListBuckets(vector<Bucket> &buckets,
@@ -79,7 +107,7 @@ int Cdobs::PutObject(const char *file_name, const string &name,
   return PutObject(src, name, bucket_name, err_msg);
 }
 
-int Cdobs::PutObject (istream &src, const string &name,
+int Cdobs::PutObject(istream &src, const string &name,
                       const string &bucket_name, string &err_msg) { 
   char ctime[kMaxTimeLength];
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
@@ -87,18 +115,15 @@ int Cdobs::PutObject (istream &src, const string &name,
   if ((bucket_id = IsValidBucket(bucket_name, err_msg)) < 0) {
     return -1;
   }
-  dout << "p1";
   int id = store_->GetObjectId(bucket_id, name.c_str());
   if (id < 0) {
     vector<int> object_ids;
     if (store_->SelectAllObjectIds(object_ids)) {
       return -1;
     }
-    dout << "p2";
     id = object_ids[object_ids.size() - 1] + 1;
     store_->BeginTransaction();
     int size = 0;
-    dout << "p3";
     int rc_cr = store_->CreateObjectEntry(id, name.c_str(), 
                                           bucket_id, ctime, err_msg);
     if (!rc_cr) {
@@ -111,7 +136,6 @@ int Cdobs::PutObject (istream &src, const string &name,
       }
     }
     else {
-      dout << "p3";
       size = -1;
     }
 
@@ -126,9 +150,8 @@ int Cdobs::PutObject (istream &src, const string &name,
   }
 }
 
-int Cdobs::DeleteObject (const int bucket_id, const int object_id,
+int Cdobs::DeleteObject(const int bucket_id, const int object_id,
                         string &err_msg) {
-  store_->BeginTransaction();
   int rc_dd = store_->DeleteObjectData(object_id);
   int ret_value = 0;
   if (!rc_dd) {
@@ -137,25 +160,16 @@ int Cdobs::DeleteObject (const int bucket_id, const int object_id,
       err_msg = "Error deleting object entry";
       ret_value = 1;
     }
-    else {
-      int rc_commit = store_->CommitTransaction();
-      if (rc_commit) {
-        ret_value = 1;
-      }
-    }
   }
   else {
     err_msg = "Error deleting object data";
     ret_value = 1;
   }
 
-  if (ret_value) {
-    store_->RollbackTransaction();
-  }
   return ret_value;
 }
 
-int Cdobs::DeleteObject (const int bucket_id, const string &name,
+int Cdobs::DeleteObject(const int bucket_id, const string &name,
                         string &err_msg) {
   int object_id = store_->GetObjectId(bucket_id, name.c_str());
   if (object_id < 0) {
@@ -168,13 +182,22 @@ int Cdobs::DeleteObject (const int bucket_id, const string &name,
 
 int Cdobs::DeleteObject(const string &bucket_name, const string &name,
                         string &err_msg) {
+  store_->BeginTransaction();
   int bucket_id = store_->GetBucketId(bucket_name.c_str());
   if (bucket_id < 0) {
     err_msg = kErrInvalidBucketName + bucket_name;
     return -1;
   }
 
-  return DeleteObject(bucket_id, name, err_msg);
+  int rc_del = DeleteObject(bucket_id, name, err_msg);
+  if (rc_del) {
+    store_->RollbackTransaction();
+    return -1;
+  }
+  else {
+    store_->CommitTransaction();
+    return 0;
+  }
 }
 
 int Cdobs::ListObjects(

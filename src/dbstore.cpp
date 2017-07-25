@@ -247,7 +247,7 @@ int DbStore::InsertBucket(int bucket_id, const char *name,
   return Exec(query); 
 }
 
-int DbStore::DeleteBucket(int bucket_id) {
+int DbStore::DeleteBucketEntry(const int bucket_id) {
   char query[SHORT_QUERY_SIZE];
   int writ = snprintf(query, SHORT_QUERY_SIZE,
       kDeleteBucket.c_str(), bucket_id);
@@ -321,19 +321,12 @@ int DbStore::GetObjectId(int bucket_id, const char *name) {
   }
 } 
 
-int DbStore::SelectObjectsIdsFromBucket(
+int DbStore::SelectObjectIdsInBucket(
     const int bucket_id, vector<int> &object_ids) {
   char query[SHORT_QUERY_SIZE];
   int writ = snprintf(query, SHORT_QUERY_SIZE, 
                       kSelectObjectsInBucket.c_str(), bucket_id);
   return ExecVectorQuery(query, object_ids);
-}
-
-/* Delete all objects from bucket
- * with given id 
- */
-int DbStore::EmptyBucket(int id) {
-  // TO be implemented. 
 }
 
 /* Delete the object data from ObjectStore

@@ -18,6 +18,7 @@ The database may be in an inconsistent state.";
 const string kErrInitFailed = "Operation `init' failed: ";
 const string kErrCreateBucketFailed = "Operation `create_bucket' failed: ";
 const string kErrListBucketsFailed = "Operation `list buckets' failed: ";
+const string kErrDeleteBucketFailed = "Operation `delete buckets' failed: ";
 const string kErrPutObjectFailed = "Operation `put object' failed: ";
 const string kErrListObjectFailed = "Operation `list object' failed: ";
 const string kErrDeleteObjectFailed = "Operation `delete object' failed: ";
@@ -54,3 +55,6 @@ const string kErrInvalidSyntax =
 
 const string kErrInvalidFile = 
 "Invalid File: ";
+
+const string kErrEmptyingBucket =
+"Error deleting objects from bucket: ";

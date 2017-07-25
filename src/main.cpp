@@ -115,6 +115,20 @@ int cmdListBuckets (Cdobs *const cdobs) {
   return 0;
 }
 
+int cmdDeleteBucket (Cdobs *const cdobs, int argc,
+  char **argv) {
+  int ret_value = 0;
+  string bucket_name(argv[2]), err_msg;
+  int rc_cb = cdobs->DeleteBucket(bucket_name, err_msg);
+  if (rc_cb) {
+    ret_value = 1;    
+    cerr << "ERROR: " << kErrDeleteBucketFailed
+    << err_msg << endl;
+  }   
+
+  return ret_value;
+}
+
 int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
   dout << "In cmdBucket" << endl;
   if (argc < 2) {
@@ -125,10 +139,14 @@ int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
   if (arg1 == "create") {
     rc_op = cmdCreateBucket(cdobs, argc, argv);
   }
+  else if (arg1 == "delete") {
+    rc_op = cmdDeleteBucket(cdobs, argc, argv);
+  }
   else {
     BucketHelp();
     return 1;
   }
+  return rc_op;
 }
 
 int cmdPutObject(Cdobs *const cdobs, string &bucket_name,

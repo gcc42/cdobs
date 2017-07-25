@@ -22,6 +22,7 @@ private:
   int DeleteObject(const int bucket_id, const std::string &name,
                   std::string &err_msg);
   int IsValidBucket(const std::string &bucket_name, std::string &err_msg);
+  int EmptyBucket(const int id, std::string &err_msg);
 
 public:
   Cdobs(DbStore *store);
@@ -29,7 +30,7 @@ public:
 
   /* Bucket operations */
   int CreateBucket(std::string name, std::string &err_msg);
-  int DeleteBucket(std::string name);
+  int DeleteBucket(const std::string &name, std::string &err_msg);
   int ListBuckets(std::vector<Bucket> &buckets,
                   std::string &err_msg);
 

@@ -24,11 +24,11 @@ private:
   int IsValidBucket(const std::string &bucket_name, std::string &err_msg);
   int EmptyBucket(const int id, std::string &err_msg);
   int NewObjectId();
-  bool IsLargeObject();
-  int PutSmallObject(istream &src, const string &name,
-                    const string &bucket_name, string &err_msg);
-  int PutLargeObject(istream &src, const string &name,
-                    const string &bucket_name, string &err_msg);
+  bool IsLargeObject(std::istream &src);
+  int PutSmallObject(std::istream &src, const int id, const std::string &name,
+                    const int bucket_id, std::string &err_msg);
+  int PutLargeObject(std::istream &src, const int id, const std::string &name,
+                    const int bucket_id, std::string &err_msg);
 
 public:
   Cdobs(DbStore *store);

@@ -92,6 +92,19 @@ int Cdobs::IsValidBucket(const string &bucket_name, string &err_msg) {
   return bucket_id;
 }
 
+bool Cdobs::IsLargeObject(istream &src) {
+  char c; bool ret_value = false;
+  src.seekg(kMaxObjectSize, ios::beg);
+  src >> c;
+  if (!src.eof()) {
+    ret_value = true;
+  }
+  // Reset the stream
+  src.clear();
+  src.seekg(0, ios::beg);
+  return ret_value;
+}
+
 int Cdobs::PutObject(const char *file_name, const string &name,
                     const string &bucket_name, string &err_msg) {
   ifstream src;
@@ -113,6 +126,7 @@ int Cdobs::NewObjectId() {
   if (store_->SelectAllObjectIds(object_ids)) {
     return -1;
   }
+  int id;
   if (object_ids.size()) {
     id = object_ids[object_ids.size() - 1] + 1;
   }
@@ -138,8 +152,8 @@ int Cdobs::PutObject(istream &src, const string &name,
     }
     // Actually put the object
     size = IsLargeObject(src) ?
-          PutLargeObject(src, name, bucket_name, err_msg)
-         :PutSmallObject(src, name, bucket_name, err_msg);
+          PutLargeObject(src, id, name, bucket_id, err_msg)
+         :PutSmallObject(src, id, name, bucket_id, err_msg);
   }
   else {
     err_msg = kErrObjectAlreadyExists + name;
@@ -148,13 +162,16 @@ int Cdobs::PutObject(istream &src, const string &name,
   return size;
 }
 
-int Cdobs::PutSmallObject(istream &src, const string &name,
-                          const string &bucket_name, string &err_msg) {
+int Cdobs::PutSmallObject(istream &src, const int id, const string &name,
+                          const int bucket_id, string &err_msg) {
   store_->BeginTransaction();
   int size = 0;
   int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
                                         ctime, 0, err_msg);
   if (!rc_cr) {
+    size = -1;
+  }
+  else {
     size = store_->PutObjectData(src, id, err_msg);
     if (size > 0) {
       store_->UpdateObjectSize(id, size);
@@ -163,9 +180,6 @@ int Cdobs::PutSmallObject(istream &src, const string &name,
       }    
     }
   }
-  else {
-    size = -1;
-  }
 
   if (size < 0) {
     store_->RollbackTransaction();
@@ -173,9 +187,40 @@ int Cdobs::PutSmallObject(istream &src, const string &name,
   return size;
 }
 
-int Cdobs::PutLargeObject(istream &src, const string &name,
-                          const string &bucket_name, string &err_msg) {
+int Cdobs::PutLargeObject(istream &src, const int id, const string &name,
+                          const int bucket_id, string &err_msg) {
+  store_->BeginTransaction();
+  int total_size = 0;
+  int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
+                                        ctime, 1, err_msg);
+  if (rc_cr) {
+    total_size = -1;
+  }
+  else {
+    int segment = 1, seg_size = 0;
+    while (!src.eof()) {
+      seg_size =
+        store_->PutObjectData(src, id, segment++, kSegmentSize, err_msg);     
+      if (seg_size >= 0) {
+        total_size += seg_size;
+      }
+      else {
+        total_size = -1;
+        break;
+      }
+    }
+    if (total_size > 0) {
+      store_->UpdateObjectSize(id, total_size);
+      if (store_->CommitTransaction()) {
+        total_size = -1;
+      }    
+    } 
+  }    
 
+  if (total_size < 0) {
+    store_->RollbackTransaction();
+  }
+  return total_size;
 }
 
 int Cdobs::DeleteObject(const int bucket_id, const int object_id,

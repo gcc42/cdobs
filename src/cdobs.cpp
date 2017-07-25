@@ -140,11 +140,18 @@ int Cdobs::PutObject(istream &src, const string &name,
                     const string &bucket_name, string &err_msg) { 
   int bucket_id;
   if ((bucket_id = IsValidBucket(bucket_name, err_msg)) < 0) {
+    dout << "Invalid Bucket" << endl;
     return -1;
   }
   int id = store_->GetObjectId(bucket_id, name.c_str()), size;
-  if (id < 0) {
+  if (id > 0) {
+    dout << "Obj exist" << endl;
+    err_msg = kErrObjectAlreadyExists + name;
+    return -1;
+  }
+  else {
     id = NewObjectId();
+    dout << "id of new object: " << id << endl;
     if (id < 0) {
       return -1;
     }
@@ -153,10 +160,7 @@ int Cdobs::PutObject(istream &src, const string &name,
           PutLargeObject(src, id, name, bucket_id, err_msg)
          :PutSmallObject(src, id, name, bucket_id, err_msg);
   }
-  else {
-    err_msg = kErrObjectAlreadyExists + name;
-    return -1;
-  }
+
   return size;
 }
 
@@ -168,8 +172,9 @@ int Cdobs::PutSmallObject(istream &src, const int id, const string &name,
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
                                         ctime, 0, err_msg);
-  if (!rc_cr) {
-    size = -1;
+  if (rc_cr) {
+    dout << "create object entry failed" << endl;
+    size = -1; 
   }
   else {
     size = store_->PutObjectData(id, src, err_msg);
@@ -184,6 +189,7 @@ int Cdobs::PutSmallObject(istream &src, const int id, const string &name,
   if (size < 0) {
     store_->RollbackTransaction();
   }
+  dout << "Size is: " << size << endl;
   return size;
 }
 
@@ -202,7 +208,7 @@ int Cdobs::PutLargeObject(istream &src, const int id, const string &name,
     int segment = 1, seg_size = 0;
     while (!src.eof()) {
       seg_size =
-        store_->PutObjectData(id, src, segment++, kSegmentSize, err_msg);     
+        store_->PutObjectData(id, src, kSegmentSize, segment++, err_msg);     
       if (seg_size >= 0) {
         total_size += seg_size;
       }

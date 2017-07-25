@@ -384,12 +384,13 @@ int DbStore::PutObjectData(const int id, istream &src, int size,
 
   char query[SHORT_QUERY_SIZE];
   int writ;
-  if (segment > 0) {
+  if (segment < 0) {
     snprintf(query, SHORT_QUERY_SIZE, kInsertObjectData.c_str(), id);
   }
   else {
     snprintf(query, SHORT_QUERY_SIZE, kInsertLobData.c_str(), id,
             segment, size_read);
+    dout << query << endl;
   }
   dout << "Put object query: " << query << endl;
   sqlite3_stmt *stmt = Prepare(query);

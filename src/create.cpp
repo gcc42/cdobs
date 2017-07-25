@@ -40,8 +40,8 @@ const std::string kObjectStoreSchema =
 
 const std::string kLobStoreSchema = 
 "LargeObjectStore ( \
-  ObjectID INTEGER FOREIGN KEY REFERENCES ObjectDirectory, \
-  Segment Integer, \
+  ObjectID INTEGER REFERENCES ObjectDirectory, \
+  Segment INTEGER, \
   SegmentSize INTEGER, \
   Data BLOB, \
   PRIMARY KEY(ObjectID, Segment) \

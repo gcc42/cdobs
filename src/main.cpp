@@ -183,13 +183,13 @@ int cmdListObjects(Cdobs *cdobs, string &bucket_name) {
       cout << "Objects in bucket: " << bucket_name << endl;
       cout << setw(5) << "ID" << " "
       << setw(20) << "CREATED "
-      << setw(7) << "SIZE "
+      << setw(12) << "SIZE "
       << "  NAME" << endl;
       for (auto it = objects.begin(); it != objects.end(); ++it) {
         obj = *it;
         cout << setw(5) << obj.id << " "
         << setw(20) << put_time(obj.created, TIME_FORMAT)
-        << setw(7) << obj.size << " "
+        << setw(12) << obj.size << " "
         << "  " << obj.name << endl;
       }
     }

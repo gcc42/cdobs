@@ -107,47 +107,75 @@ int Cdobs::PutObject(const char *file_name, const string &name,
   return PutObject(src, name, bucket_name, err_msg);
 }
 
+int Cdobs::NewObjectId() {
+  vector<int> object_ids;
+  dout << object_ids.size() << endl;
+  if (store_->SelectAllObjectIds(object_ids)) {
+    return -1;
+  }
+  if (object_ids.size()) {
+    id = object_ids[object_ids.size() - 1] + 1;
+  }
+  else {
+    id = 1;
+  }
+  return id;
+}
+
 int Cdobs::PutObject(istream &src, const string &name,
-                      const string &bucket_name, string &err_msg) { 
+                    const string &bucket_name, string &err_msg) { 
   char ctime[kMaxTimeLength];
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
   int bucket_id;
   if ((bucket_id = IsValidBucket(bucket_name, err_msg)) < 0) {
     return -1;
   }
-  int id = store_->GetObjectId(bucket_id, name.c_str());
+  int id = store_->GetObjectId(bucket_id, name.c_str()), size;
   if (id < 0) {
-    vector<int> object_ids;
-    if (store_->SelectAllObjectIds(object_ids)) {
+    id = NewObjectId();
+    if (id < 0) {
       return -1;
     }
-    id = object_ids[object_ids.size() - 1] + 1;
-    store_->BeginTransaction();
-    int size = 0;
-    int rc_cr = store_->CreateObjectEntry(id, name.c_str(), 
-                                          bucket_id, ctime, err_msg);
-    if (!rc_cr) {
-      size = store_->PutObjectData(src, id, err_msg);
-      if (size > 0) {
-        store_->UpdateObjectSize(id, size);
-        if (store_->CommitTransaction()) {
-          size = -1;
-        }    
-      }
-    }
-    else {
-      size = -1;
-    }
-
-    if (size < 0) {
-      store_->RollbackTransaction();
-    }
-    return size;    
+    // Actually put the object
+    size = IsLargeObject(src) ?
+          PutLargeObject(src, name, bucket_name, err_msg)
+         :PutSmallObject(src, name, bucket_name, err_msg);
   }
   else {
     err_msg = kErrObjectAlreadyExists + name;
     return -1;
   }
+  return size;
+}
+
+int Cdobs::PutSmallObject(istream &src, const string &name,
+                          const string &bucket_name, string &err_msg) {
+  store_->BeginTransaction();
+  int size = 0;
+  int rc_cr = store_->CreateObjectEntry(id, name.c_str(), bucket_id,
+                                        ctime, 0, err_msg);
+  if (!rc_cr) {
+    size = store_->PutObjectData(src, id, err_msg);
+    if (size > 0) {
+      store_->UpdateObjectSize(id, size);
+      if (store_->CommitTransaction()) {
+        size = -1;
+      }    
+    }
+  }
+  else {
+    size = -1;
+  }
+
+  if (size < 0) {
+    store_->RollbackTransaction();
+  }
+  return size;
+}
+
+int Cdobs::PutLargeObject(istream &src, const string &name,
+                          const string &bucket_name, string &err_msg) {
+
 }
 
 int Cdobs::DeleteObject(const int bucket_id, const int object_id,

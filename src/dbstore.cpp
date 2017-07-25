@@ -37,9 +37,9 @@ const string DbStore::kInsertBucket =
 
 const string DbStore::kInsertObjectEntry = 
 "INSERT INTO ObjectDirectory \
- (ObjectID, ObjectName, BucketID, Created, Size) \
+ (ObjectID, ObjectName, BucketID, Created, Size, Lob) \
  VALUES \
- (%d, '%s', %d, '%s', %d)";
+ (%d, '%s', %d, '%s', %d, %d)";
 
 const string DbStore::kInsertObjectData =
 "INSERT INTO ObjectStore \
@@ -349,18 +349,18 @@ int DbStore::DeleteObjectEntry(int id) {
 
 int DbStore::CreateObjectEntry(
     const int id, const char *name, const int bucket_id,
-    char *time, string &err_msg) {
+    char *time, int lob_flag string &err_msg) {
   // Default size, unknown before putting in the object data
-  return CreateObjectEntry(id, name, bucket_id, time, 0, err_msg);    
+  return CreateObjectEntry(id, name, bucket_id, time, 0, lob_flag, err_msg);    
 }
 
 int DbStore::CreateObjectEntry(
     const int id, const char *name, const int bucket_id,
-    char *time, int size, string &err_msg) {
+    char *time, int size, int lob_flag, string &err_msg) {
   char query[MAX_QUERY_SIZE];
   int writ = snprintf(query, MAX_QUERY_SIZE,
-      kInsertObjectEntry.c_str(), id, name, 
-      bucket_id, time, size);
+                      kInsertObjectEntry.c_str(), id, name, 
+                      bucket_id, time, size, lob_flag);
   if (Exec(query)) {
     err_msg = "Query INSERT OBJECT ENTRY failed";
     return -1;
@@ -369,22 +369,8 @@ int DbStore::CreateObjectEntry(
   return 0;
 }
 
-/* Insert object data into the ObjectStore table */
-int DbStore::PutObjectData(istream &src, int id, string &err_msg) {
-  if (!src.good()) {
-    err_msg = "Invalid file";
-    return -1;
-  }
-  // Get Size
-  src.seekg(0, ios::end);
-  streampos size = src.tellg();
-  src.seekg(0);
-
-  if (size > kMaxObjectSize) {
-    err_msg = kErrObjectTooLarge;
-    return -1;
-  }
-
+int DbStore::PutObjectData(const int id, istream &src, int size, 
+                          string &err_msg) {
   char* buffer = new char[size];
   src.read(buffer, size);
 
@@ -403,8 +389,7 @@ int DbStore::PutObjectData(istream &src, int id, string &err_msg) {
     // SQLITE_STATIC because the statement is finalized
     // before the buffer is freed:
     // Column 2 for the data column
-    rc = sqlite3_bind_blob(stmt, 1, buffer,
-      size, SQLITE_STATIC);
+    rc = sqlite3_bind_blob(stmt, 1, buffer, src.gcount(), SQLITE_STATIC);
     if (rc != SQLITE_OK) {
       err_msg = "Bind failed: " + string(sqlite3_errmsg(sql_db_));
       return -1;
@@ -420,6 +405,24 @@ int DbStore::PutObjectData(istream &src, int id, string &err_msg) {
   sqlite3_finalize(stmt);
   delete[] buffer;
   return size;
+}
+
+/* Insert object data into the ObjectStore table */
+int DbStore::PutObjectData(const int id, istream &src, string &err_msg) {
+  if (!src.good()) {
+    err_msg = "Invalid file";
+    return -1;
+  }
+  // Get Size
+  src.seekg(0, ios::end);
+  streampos size = src.tellg();
+  src.seekg(0);
+
+  if (size > kMaxObjectSize) {
+    err_msg = kErrObjectTooLarge;
+    return -1;
+  }
+  return PutObjectData(id, src, size, err_msg);
 }
 
 int DbStore::UpdateObjectSize(int id, int size) {

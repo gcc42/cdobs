@@ -23,6 +23,12 @@ private:
                   std::string &err_msg);
   int IsValidBucket(const std::string &bucket_name, std::string &err_msg);
   int EmptyBucket(const int id, std::string &err_msg);
+  int NewObjectId();
+  bool IsLargeObject();
+  int PutSmallObject(istream &src, const string &name,
+                    const string &bucket_name, string &err_msg);
+  int PutLargeObject(istream &src, const string &name,
+                    const string &bucket_name, string &err_msg);
 
 public:
   Cdobs(DbStore *store);

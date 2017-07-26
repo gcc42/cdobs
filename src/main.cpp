@@ -12,51 +12,32 @@
 #include "cdobs.h"
 #include "dberror.h"
 #include "utils.h"
+#include "help.h"
 
 using namespace std;
 
 // Enums of all named args to
 // cdobs, like --db for exampel
 enum NamedArg {
-  DB = 1
+  DB = 1, HELP = 2
 };
 
 // "" becaue the NamedArg enum starts from 
 // 1
-vector<string> named_arg_list { "", "db" };
-
-static const string kHelpBucket = 
-"Usage: cdobs bucket \
-[help | create name | \
-list name | delete name]\n\
-where name is the bucket_name";
-
-static const string kHelpCdobs = 
-"Usage: cdobs [--db file_name]\
-[help | bucket | object]\n\
-Hit one of the commands to know more \
-about them";
-
-static const string kHelpObject = 
-"Usage: cdobs object \
-[put -b bucket_name -f file_name object_name]";
+vector<pair<string, int>> named_arg_list { make_pair("", 0), make_pair("db", 1), make_pair("help", 0) };
 
 
 void Help () {
   cout << kHelpCdobs << endl;
 }
 
+void InvalidSyntax (const string &err) {
+  cout << kErrInvalidSyntax << err << endl;
+  cout << "Try 'cdobs --help' for more information." << endl;
+}
+
 void InvalidSyntax () {
-  cout << kErrInvalidSyntax << endl;
-  Help();
-}
-
-void BucketHelp () {
-  cout << kHelpBucket << endl;
-}
-
-void ObjectHelp () {
-  cout << kHelpObject << endl;
+  InvalidSyntax("");
 }
 
 int cmdInit (int argc, char **argv, const string &db_file) {
@@ -149,7 +130,7 @@ int cmdBucket (Cdobs *const cdobs, int &argc, char **&argv) {
   argc--; argv++;
   string arg1(argv[0]), bucket_name; int rc_op;
   if (argc < 2) {
-    BucketHelp();
+    InvalidSyntax("Missing OPERATION");
     return 1;
   }
   else {
@@ -165,7 +146,7 @@ int cmdBucket (Cdobs *const cdobs, int &argc, char **&argv) {
     rc_op = cmdEmptyBucket(cdobs, bucket_name);
   }
   else {
-    BucketHelp();
+    InvalidSyntax(arg1);
     return 1;
   }
   return rc_op;
@@ -175,8 +156,7 @@ int cmdPutObject(Cdobs *const cdobs, string &bucket_name,
                 string &object_name, string &file_name) {
   if (bucket_name == "" || object_name == ""
       || file_name == "") {
-    cout << kErrInvalidSyntax << endl;
-    ObjectHelp();
+    InvalidSyntax();
     return 1;
   }
 
@@ -193,7 +173,7 @@ int cmdPutObject(Cdobs *const cdobs, string &bucket_name,
 
 int cmdListObjects(Cdobs *cdobs, string &bucket_name) {
   if (bucket_name.empty()) {
-    cout << kErrInvalidSyntax << "-b bucket_name required" << endl;
+    InvalidSyntax("-b BUCKET_NAME required");
     return 1;
   }
   vector<Object> objects;
@@ -230,18 +210,15 @@ int cmdListObjects(Cdobs *cdobs, string &bucket_name) {
 int cmdDeleteObject(Cdobs *const cdobs, string &bucket_name,
                     string &object_name, string &file_name) {
   if (file_name != "") {
-    cout << kErrInvalidSyntax << "-f not allowed with object delete" << endl;
-    ObjectHelp();
+    InvalidSyntax("-f not allowed with object delete");
     return 1;
   }
   else if (bucket_name == "") {
-    cout << kErrInvalidSyntax << "Missing bucket name parameter" << endl;
-    ObjectHelp();
+    InvalidSyntax("Missing required parameter -b BUCKET_NAME");
     return 1;
   }
   else if (object_name == "") {
-    cout << kErrInvalidSyntax << "Missing object name parameter" << endl;
-    ObjectHelp();
+    InvalidSyntax("Missing object name parameter");
     return 1;
   }
 
@@ -257,7 +234,7 @@ int cmdDeleteObject(Cdobs *const cdobs, string &bucket_name,
 
 int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
   if (argc < 2) {
-    ObjectHelp();
+    InvalidSyntax("Missing OPERATION");
     return 0;
   }
   string bucket_name, file_name, object_name;
@@ -274,8 +251,7 @@ int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
       object_name = argv[i];
     }
     else {
-      cout << kErrInvalidSyntax << argv[i] << endl;
-      ObjectHelp();
+      InvalidSyntax(argv[i]);
       return 1;
     }
   }
@@ -292,9 +268,7 @@ int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
                           object_name, file_name);  
   }
   else {
-    cout << kErrInvalidSyntax
-    << arg1 << endl;
-    ObjectHelp();
+    InvalidSyntax(arg1);
     return 1;
   }
 }
@@ -304,13 +278,12 @@ int cmdObject (Cdobs *const cdobs, int argc, char **argv) {
 static
 int GetNamedArg (char *p_arg) {
   if (p_arg[0] != '-') {
-    dout << p_arg << " NOt a named arg" << endl;
     return 0; // Not a named arg
   }
   char *arg = (p_arg[1] == '-') ? &p_arg[2]
       : &p_arg[1];
   for (int i = 1; i < named_arg_list.size(); ++i) {
-    if (named_arg_list[i] == arg) {
+    if (named_arg_list[i].first == arg) {
       dout << "Comp string with char * successful" << endl;
       return i;
     }
@@ -319,15 +292,15 @@ int GetNamedArg (char *p_arg) {
 }
 
 static
-int ParseArgs (int &argc, char **&argv, 
-  map<int, char *> &arg_map) {
+int ParseArgs (int &argc, char **&argv, map<int, char *> &arg_map) {
   // Advance through 1 for name of prog
   // i.e cdobs
   argc--; ++argv;
-  int i = 0, arg;
+  int i = 0, arg, incr = 0;
   while (i < argc) {
     arg = GetNamedArg(argv[i]);
     if (!arg) {
+      argc -= i; argv += i;
       // Not a named arg
       return 0;
     }
@@ -336,7 +309,9 @@ int ParseArgs (int &argc, char **&argv,
       InvalidSyntax();
       return -1;
     }
-    else {
+    
+    if (named_arg_list[arg].second) {
+      incr = 2;
       if (i + 1 == argc) {
         InvalidSyntax();
         return -1;
@@ -344,14 +319,20 @@ int ParseArgs (int &argc, char **&argv,
       if (!arg_map.insert(std::pair<int, char *>(
           arg, argv[i + 1])).second) {
         // Already exists entry, undefined.
-        InvalidSyntax();
+        InvalidSyntax("Duplicate argument " + named_arg_list[arg].first);
         return -1;
-      }
+      }        
     }
-    i += 2;
-    argc -= 2;
-    argv += 2;
+    else {
+      incr = 1;
+      char empty[] = "";
+      arg_map.insert(std::pair<int, char *>(arg, empty));
+    }
+    
+    i += incr;
   }
+
+  argc -= i; argv += i;
   return 0;
 }
 
@@ -373,6 +354,12 @@ int main(int argc, char **argv) {
   if (rc_parse) {
     return 1;
   }
+
+  if (arg_map.count(HELP)) {
+    Help();
+    return 0;
+  }
+
   string db_file;
   if (arg_map.count(DB)) {
     db_file = arg_map[DB];
@@ -406,7 +393,7 @@ int main(int argc, char **argv) {
         exit_code = cmdObject(cdobs, c_argc, c_argv);
       }
       else {
-        Help();
+        InvalidSyntax(cmd);
         exit_code = 1;
       }       
     }

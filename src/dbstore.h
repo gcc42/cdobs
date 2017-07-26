@@ -60,6 +60,7 @@ private:
   static const std::string kSelectObjectId;
   static const std::string kDeleteBucket;
   static const std::string kDeleteData;
+  static const std::string kDeleteLargeData;
   static const std::string kDeleteObject;
   static const std::string kSelectObjectsInBucket;
   static const std::string kUpdateObjectSize;

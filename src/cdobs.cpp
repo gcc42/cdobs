@@ -20,7 +20,7 @@ int Cdobs::good () {
   return (state_ == S_GOOD);
 }
 
-int Cdobs::CreateBucket(string name, string &err_msg) {
+int Cdobs::CreateBucket(const string &name, string &err_msg) {
   char ctime[kMaxTimeLength];
   // Get time as an "YYYY-MM-DD HH:MM:SS" format string
   int writ = GetCurrentTime(ctime, kMaxTimeLength);
@@ -38,6 +38,22 @@ int Cdobs::CreateBucket(string name, string &err_msg) {
     intial_obj_count);
   return err;
 }
+
+int Cdobs::EmptyBucket(const std::string &name, std::string &err_msg) {
+  int id;
+  if ((id = IsValidBucket(name, err_msg)) < 0) {
+    return -1;
+  }
+  store_->BeginTransaction();
+  if (!EmptyBucket(id, err_msg)) {
+    return store_->CommitTransaction();
+  }
+  else {
+    store_->RollbackTransaction();
+    return -1;
+  }
+}
+
 
 int Cdobs::EmptyBucket(const int id, string &err_msg) {
   vector<int> object_ids;
@@ -71,11 +87,11 @@ int Cdobs::DeleteBucket(const string &name, string &err_msg) {
   }
   if (ret_value) {
     store_->RollbackTransaction();
+    return -1;
   }
   else {
-    store_->CommitTransaction();
+    return store_->CommitTransaction();
   }
-  return ret_value;
 }
 
 int Cdobs::ListBuckets(vector<Bucket> &buckets,

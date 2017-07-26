@@ -75,10 +75,9 @@ int cmdInit (int argc, char **argv, const string &db_file) {
 }
 
 
-int cmdCreateBucket (Cdobs *const cdobs, int argc,
-  char **argv) {
+int cmdCreateBucket (Cdobs *const cdobs, const string &bucket_name) {
   int ret_value = 0;
-  string bucket_name(argv[2]), err_msg;
+  string err_msg;
   int rc_cb = cdobs->CreateBucket(bucket_name, err_msg);
   if (rc_cb) {
     ret_value = 1;    
@@ -115,10 +114,9 @@ int cmdListBuckets (Cdobs *const cdobs) {
   return 0;
 }
 
-int cmdDeleteBucket (Cdobs *const cdobs, int argc,
-  char **argv) {
+int cmdDeleteBucket (Cdobs *const cdobs, const string &bucket_name) {
   int ret_value = 0;
-  string bucket_name(argv[2]), err_msg;
+  string err_msg;
   int rc_cb = cdobs->DeleteBucket(bucket_name, err_msg);
   if (rc_cb) {
     ret_value = 1;    
@@ -129,18 +127,42 @@ int cmdDeleteBucket (Cdobs *const cdobs, int argc,
   return ret_value;
 }
 
-int cmdBucket (Cdobs *const cdobs, int argc, char **argv) {
+int cmdEmptyBucket (Cdobs *const cdobs, const string &bucket_name) {
+  int ret_value = 0;
+  string err_msg;
+  int rc_eb = cdobs->EmptyBucket(bucket_name, err_msg);
+  if (rc_eb) {
+    ret_value = 1;
+    cerr << "ERROR: " << kErrEmptyBucketFailed
+    << err_msg << endl;
+  }
+
+  return ret_value;
+}
+
+int cmdBucket (Cdobs *const cdobs, int &argc, char **&argv) {
   dout << "In cmdBucket" << endl;
   if (argc < 2) {
     return cmdListBuckets(cdobs);
   }
 
-  string arg1(argv[1]); int rc_op;
+  argc--; argv++;
+  string arg1(argv[0]), bucket_name; int rc_op;
+  if (argc < 2) {
+    BucketHelp();
+    return 1;
+  }
+  else {
+    bucket_name = argv[1];
+  }
   if (arg1 == "create") {
-    rc_op = cmdCreateBucket(cdobs, argc, argv);
+    rc_op = cmdCreateBucket(cdobs, bucket_name);
   }
   else if (arg1 == "delete") {
-    rc_op = cmdDeleteBucket(cdobs, argc, argv);
+    rc_op = cmdDeleteBucket(cdobs, bucket_name);
+  }
+  else if (arg1 == "empty") {
+    rc_op = cmdEmptyBucket(cdobs, bucket_name);
   }
   else {
     BucketHelp();

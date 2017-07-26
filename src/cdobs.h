@@ -35,10 +35,10 @@ public:
   int good ();
 
   /* Bucket operations */
-  int CreateBucket(std::string name, std::string &err_msg);
+  int CreateBucket(const std::string &name, std::string &err_msg);
   int DeleteBucket(const std::string &name, std::string &err_msg);
-  int ListBuckets(std::vector<Bucket> &buckets,
-                  std::string &err_msg);
+  int ListBuckets(std::vector<Bucket> &buckets, std::string &err_msg);
+  int EmptyBucket(const std::string &name, std::string &err_msg);
 
   /* Object operations */
   int PutObject(const char *file_name, const std::string &name,

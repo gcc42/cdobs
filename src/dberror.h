@@ -11,6 +11,7 @@ extern const std::string kErrInitFailed;
 extern const std::string kErrCreateBucketFailed;
 extern const std::string kErrListBucketsFailed;
 extern const std::string kErrDeleteBucketFailed;
+extern const std::string kErrEmptyBucketFailed;
 extern const std::string kErrPutObjectFailed;
 extern const std::string kErrListObjectFailed;
 extern const std::string kErrDeleteObjectFailed;

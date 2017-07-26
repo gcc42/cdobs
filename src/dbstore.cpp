@@ -69,6 +69,10 @@ const string DbStore::kDeleteData =
 "DELETE FROM ObjectStore \
 WHERE ObjectID = %d";
 
+const string DbStore::kDeleteLargeData =
+"DELETE FROM LargeObjectStore \
+WHERE ObjectID = %d";
+
 const string DbStore::kDeleteObject =
 "DELETE FROM ObjectDirectory \
 WHERE ObjectID = %d";
@@ -90,6 +94,7 @@ const string DbStore::kSelectObjectIdsInBucket =
 "SELECT ObjectID FROM ObjectDirectory \
 WHERE BucketID=%d \
 ORDER BY ObjectID ASC";
+
 
 /* Checks if the given db is initialized
  * for cdobs. Currently does this by checking 
@@ -338,7 +343,13 @@ int DbStore::DeleteObjectData(int id) {
   char query[SHORT_QUERY_SIZE];
   int writ = snprintf(query, SHORT_QUERY_SIZE,
                       kDeleteData.c_str(), id);
-  return Exec(query);
+  int rc_exec = Exec(query);
+  if (!rc_exec) {
+    writ = snprintf(query, SHORT_QUERY_SIZE,
+                    kDeleteLargeData.c_str(), id);
+    rc_exec = Exec(query);
+  }
+  return rc_exec;
 }
 
 /* Delete the object entry from ObjectDirectory
@@ -390,7 +401,6 @@ int DbStore::PutObjectData(const int id, istream &src, int size,
   else {
     snprintf(query, SHORT_QUERY_SIZE, kInsertLobData.c_str(), id,
             segment, size_read);
-    dout << query << endl;
   }
   dout << "Put object query: " << query << endl;
   sqlite3_stmt *stmt = Prepare(query);

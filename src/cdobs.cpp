@@ -155,6 +155,7 @@ int Cdobs::PutObject(istream &src, const string &name,
     if (id < 0) {
       return -1;
     }
+    dout << "IsLargeObject: " << IsLargeObject(src) << endl;
     // Actually put the object
     size = IsLargeObject(src) ?
           PutLargeObject(src, id, name, bucket_id, err_msg)

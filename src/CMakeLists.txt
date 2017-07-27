@@ -11,7 +11,7 @@ set(cdobs_srcs
 add_executable(cdobs ${cdobs_srcs})
 target_link_libraries(cdobs sqlite3)
 
-add_executable(debug ${cdobs_srcs})
+add_executable(debug EXCLUDE_FROM_ALL ${cdobs_srcs})
 target_link_libraries(debug sqlite3)
 set_target_properties(
     debug 

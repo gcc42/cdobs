@@ -1,5 +1,5 @@
 # cdobs
-Database object storage backend for Ceph
+Database object storage backend for Ceph. The `Cdobs` class implements the SQL datastorage accroding to the schema described [here](https://github.com/forumulator/RGWFileBackend/blob/master/DBSchema.md).
 
 ### Dependencies
 Install the following packages on Fedora for SQLite3:
